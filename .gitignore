@@ -1,0 +1,33 @@
+# Secrets: never commit these (an automatic deduction in SAM10)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.ppk
+credentials
+credentials.*
+aws-exports.*
+
+# Database dumps and backups
+*.archive
+*.archive.gz
+dumps/
+backups/
+
+# Upstream LibreChat clone lives in vendor/ (kept out of our history; we only commit our config)
+/vendor/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Logs and OS junk
+logs/
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

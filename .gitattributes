@@ -1,0 +1,5 @@
+# Keep LF line endings so scripts and configs work on the Linux EC2 instance and in containers.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary

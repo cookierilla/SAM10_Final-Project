@@ -1,0 +1,36 @@
+# Kapé Lumen additions to LibreChat's docker-compose.yml.
+# install-local.ps1 copies this file into vendor/LibreChat/, where Docker Compose
+# picks it up automatically. Relative paths below are relative to vendor/LibreChat/.
+
+services:
+  api:
+    depends_on:
+      - brew-gateway
+    volumes:
+      - type: bind
+        source: ../../librechat/librechat.yaml
+        target: /app/librechat.yaml
+        read_only: true
+      # Replace LibreChat's logo with ours (the path inside the image is checked in docs/SETUP-LOCAL.md).
+      - type: bind
+        source: ../../librechat/assets/logo.svg
+        target: /app/client/dist/assets/logo.svg
+        read_only: true
+
+  brew-gateway:
+    build: ../../gateway
+    container_name: brew-gateway
+    restart: always
+    environment:
+      # Read from vendor/LibreChat/.env (gitignored). Never write the key here.
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      CONTENT_SOURCE: local
+      KEY_SOURCE: env
+    volumes:
+      - type: bind
+        source: ../../content
+        target: /app/content
+        read_only: true
+    # No "ports:" on purpose: only LibreChat can reach the gateway, over the Docker network.

@@ -1,0 +1,3 @@
+# This folder sits inside XAMPP's htdocs. Block Apache from serving any of it,
+# so files such as vendor/LibreChat/.env (which holds the Gemini key) can't be opened at http://localhost/.
+Require all denied

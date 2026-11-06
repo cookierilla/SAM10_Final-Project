@@ -1,0 +1,116 @@
+# Kapé Lumen — LibreChat configuration (the reskin)
+# Mounted into the LibreChat container at /app/librechat.yaml.
+# Reference: https://www.librechat.ai/docs/configuration/librechat_yaml
+# After editing, restart: docker compose restart api   (and check `docker compose logs api` for config warnings)
+
+version: 1.3.18
+cache: true
+
+interface:
+  customWelcome: "Kumusta! I'm Lumen, Kapé Lumen's virtual barista ☕ Ask me about our menu, branches, opening hours, Lumen Stamps or house policies."
+  # Hide everything a café customer doesn't need. The fewer knobs, the fewer ways to break it.
+  modelSelect: false
+  parameters: false
+  presets: false
+  prompts: false
+  agents: false
+  bookmarks: false
+  multiConvo: false
+  fileSearch: false
+  fileCitations: false
+  marketplace:
+    use: false
+  feedback: true
+  privacyPolicy:
+    externalUrl: "https://<your-github-username>.github.io/kape-lumen/system-card.html"
+    openNewTab: true
+  termsOfService:
+    externalUrl: "https://<your-github-username>.github.io/kape-lumen/system-card.html"
+    openNewTab: true
+    modalAcceptance: true
+    modalTitle: "Before you chat with Lumen"
+    modalContent: |
+      **Lumen is a student project (SAM10).** Kapé Lumen is a fictional café, and all its information is invented.
+
+      - Lumen answers questions about the café's menu, branches, hours, loyalty card and policies. It can be wrong. Check prices and hours with the staff.
+      - **Lumen cannot tell you whether food is safe for your allergy or medical condition.** Always ask the staff in person.
+      - Do not type personal information (real names, phone numbers, addresses). Your questions are sent to Google's Gemini model to generate the answer.
+
+  # Colours: coffee brown + cream. Needs a LibreChat build that supports interface.theme
+  # (merged to `dev` after v0.8.8). Older images ignore this block; see docs/SETUP-LOCAL.md.
+  theme:
+    version: 1
+    name: kape-lumen
+    modes:
+      light:
+        colors:
+          rgb-surface-primary: '255 251 245'
+          rgb-surface-secondary: '247 239 228'
+          rgb-surface-tertiary: '239 227 211'
+          rgb-surface-hover: '236 222 203'
+          rgb-text-primary: '43 29 20'
+          rgb-text-secondary: '94 68 52'
+          rgb-accent-primary: '140 82 45'
+          rgb-accent-primary-hover: '112 62 32'
+          rgb-ring-primary: '140 82 45'
+          rgb-link: '140 82 45'
+          rgb-surface-submit: '140 82 45'
+          rgb-surface-submit-hover: '112 62 32'
+          rgb-button-primary: '140 82 45'
+          rgb-button-primary-hover: '112 62 32'
+        appearance:
+          controlRadius: '1rem'
+          surfaceRadius: '1.25rem'
+      dark:
+        colors:
+          rgb-surface-primary: '30 22 17'
+          rgb-surface-secondary: '42 31 24'
+          rgb-surface-tertiary: '56 41 31'
+          rgb-surface-hover: '66 49 37'
+          rgb-text-primary: '245 235 222'
+          rgb-text-secondary: '210 190 168'
+          rgb-accent-primary: '214 160 110'
+          rgb-accent-primary-hover: '232 184 138'
+          rgb-ring-primary: '214 160 110'
+          rgb-link: '214 160 110'
+          rgb-surface-submit: '176 112 64'
+          rgb-surface-submit-hover: '196 130 80'
+          rgb-button-primary: '176 112 64'
+          rgb-button-primary-hover: '196 130 80'
+        appearance:
+          controlRadius: '1rem'
+          surfaceRadius: '1.25rem'
+
+registration:
+  socialLogins: []
+
+# One fixed "model": the Lumen barista, served by brew-gateway.
+modelSpecs:
+  enforce: true
+  prioritize: true
+  list:
+    - name: "lumen-barista"
+      label: "Lumen · Virtual Barista"
+      description: "Answers questions about Kapé Lumen's menu, branches, hours, loyalty card and policies."
+      default: true
+      iconURL: "/assets/logo.svg"
+      preset:
+        endpoint: "Kapé Lumen"
+        model: "lumen-barista"
+        modelLabel: "Lumen"
+        greeting: "Hi! I'm Lumen ☕ Try: \"How much is an iced Spanish latte?\" or \"What time do you open on Sunday?\""
+        temperature: 0.3
+
+endpoints:
+  custom:
+    - name: "Kapé Lumen"
+      # GATEWAY_TOKEN comes from LibreChat's .env; the gateway checks it.
+      apiKey: "${GATEWAY_TOKEN}"
+      baseURL: "http://brew-gateway:8080/v1"
+      models:
+        default: ["lumen-barista"]
+        fetch: false
+      titleConvo: true
+      titleModel: "lumen-barista"
+      modelDisplayLabel: "Lumen"
+      iconURL: "/assets/logo.svg"
