@@ -31,3 +31,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Local-only notes (test accounts etc.)
+LOCAL-NOTES.md

@@ -110,7 +110,8 @@ endpoints:
       models:
         default: ["lumen-barista"]
         fetch: false
-      titleConvo: true
-      titleModel: "lumen-barista"
+      # Off: each title costs an extra Gemini call, and the free tier allows only
+      # 5 requests/minute (found 2026-11-06, see docs/evidence). Titles stay "New Chat".
+      titleConvo: false
       modelDisplayLabel: "Lumen"
       iconURL: "/assets/logo.svg"

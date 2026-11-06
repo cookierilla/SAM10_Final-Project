@@ -1,0 +1,6 @@
+# E-17 candidate: Gemini model retired for new keys (2026-11-06, local)
+# Source: docker logs brew-gateway. No secrets in these lines (checked).
+{"ts":"2026-11-06T12:49:37.083Z"}
+{"ts":"2026-11-06T12:49:37.184Z"}
+{"ts":"2026-11-06T12:49:38.627Z"}
+{"ts":"2026-11-06T12:49:38.803Z"}

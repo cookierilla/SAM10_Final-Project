@@ -19,7 +19,7 @@ Goal for the end of week 1: LibreChat running on this PC with the Kapé Lumen re
 ## 2. Get a Gemini API key
 1. Go to https://aistudio.google.com/apikey and sign in with a personal Google account.
 2. Click **Create API key** and copy it. Don't save it in any file in this project; the install script asks for it.
-3. Note the free-tier rate limits for `gemini-2.5-flash` (or the model you pick) in AI Studio. You'll quote them in the system card.
+3. Note the free-tier rate limits for `gemini-3.5-flash-lite` (or the model you pick) in AI Studio. You'll quote them in the system card.
 
 ## 3. Take the "original" screenshots first (E-05)
 The brief wants the original LibreChat next to your reskin. The quickest way to get that is LibreChat's public demo, or a run of the stock app before our config is applied:

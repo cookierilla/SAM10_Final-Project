@@ -21,7 +21,7 @@ export const config = {
 
   // Upstream model (Gemini's OpenAI-compatible API)
   upstreamBaseUrl: env('UPSTREAM_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai'),
-  upstreamModel: env('GEMINI_MODEL', 'gemini-2.5-flash'),
+  upstreamModel: env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
   upstreamTimeoutMs: Number(env('UPSTREAM_TIMEOUT_MS', '60000')),
 
   // Where the Gemini key comes from
