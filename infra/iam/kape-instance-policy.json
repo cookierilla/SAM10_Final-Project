@@ -1,0 +1,53 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadCafeContent",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::BUCKET_NAME",
+      "Condition": { "StringLike": { "s3:prefix": ["content/*", "content/"] } }
+    },
+    {
+      "Sid": "GetCafeDocs",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::BUCKET_NAME/content/*"
+    },
+    {
+      "Sid": "WriteBackupsOnly",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::BUCKET_NAME/backups/*", "arn:aws:s3:::BUCKET_NAME"],
+      "Condition": { "StringLikeIfExists": { "s3:prefix": ["backups/*", "backups/"] } }
+    },
+    {
+      "Sid": "ReadOwnSecrets",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"],
+      "Resource": [
+        "arn:aws:ssm:ap-southeast-1:ACCOUNT_ID:parameter/kape-lumen",
+        "arn:aws:ssm:ap-southeast-1:ACCOUNT_ID:parameter/kape-lumen/*"
+      ]
+    },
+    {
+      "Sid": "ShipLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"],
+      "Resource": "arn:aws:logs:ap-southeast-1:ACCOUNT_ID:log-group:/kape/*"
+    },
+    {
+      "Sid": "PublishMetrics",
+      "Effect": "Allow",
+      "Action": "cloudwatch:PutMetricData",
+      "Resource": "*",
+      "Condition": { "StringEquals": { "cloudwatch:namespace": ["CWAgent", "KapeLumen"] } }
+    },
+    {
+      "Sid": "AlertsTopic",
+      "Effect": "Allow",
+      "Action": "sns:Publish",
+      "Resource": "arn:aws:sns:ap-southeast-1:ACCOUNT_ID:kape-alerts"
+    }
+  ]
+}

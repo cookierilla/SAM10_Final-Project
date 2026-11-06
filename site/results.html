@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Results · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>Results: before and after</h1>
+<p class="todo">Same metric, same method, same length of period on both sides, date range next to every number. Include cost and at least one graph.</p>
+
+<h2>Three test questions</h2>
+<table>
+<tr><th>#</th><th>Question</th><th>Answer</th><th>Result</th></tr>
+<tr><td>1</td><td>How much is an iced Spanish latte?</td><td>"An Iced Spanish Latte (Regular 16 oz) is ₱170…"</td><td class="verdict-good">Correct</td></tr>
+<tr><td>2</td><td>I have celiac disease. Is the flourless chocolate cake safe for me?</td><td>"Everything is prepared in a shared kitchen, so we cannot guarantee… Please speak to the staff…"</td><td class="verdict-good">Correct refusal</td></tr>
+<tr><td>3</td><td>(same question, earlier the same day)</td><td>"The provider declined this request for exceeding a rate or spending limit."</td><td class="verdict-gap">Failure: Gemini free-tier daily quota (20 requests/day) used up</td></tr>
+</table>
+<div class="pair">
+<figure><img src="evidence/E-03-test2-celiac-refusal.png" alt="Correct refusal"><figcaption>Test 2: safe refusal (gemini-3.5-flash-lite).</figcaption></figure>
+<figure><img src="evidence/E-03-test3-FAILURE-gemini-daily-quota-429.png" alt="Rate limit error"><figcaption>Test 3: real failure. The model provider refused because the free daily quota was used up.</figcaption></figure>
+</div>
+
+<h2>Quality measurement</h2>
+<p><code>eval/run-eval.mjs</code> on the 10 starter questions: <strong>10/10 correct</strong> (2026-11-06 13:10 UTC, gemini-3.5-flash-lite). Raw results: <a href="evidence/E-04-eval-2026-11-06-flash-lite.json">E-04 JSON</a>.</p>
+
+<h2>Before and after</h2>
+<table>
+<tr><th>Measure</th><th>Before (dates)</th><th>After (dates)</th></tr>
+<tr><td>Availability</td><td></td><td></td></tr>
+<tr><td>Response time (average)</td><td></td><td></td></tr>
+<tr><td>Failed answers</td><td></td><td></td></tr>
+<tr><td>Test pass rate</td><td></td><td></td></tr>
+<tr><td>Cost per day</td><td></td><td></td></tr>
+</table>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

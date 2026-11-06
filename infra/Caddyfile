@@ -1,0 +1,23 @@
+# Caddy gets and renews a free Let's Encrypt certificate for SITE_ADDRESS automatically,
+# and redirects HTTP to HTTPS. SITE_ADDRESS is e.g. 13-250-1-2.sslip.io (built from the Elastic IP).
+
+{$SITE_ADDRESS} {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy api:3080 {
+		# Stream chat answers (Server-Sent Events) without buffering.
+		flush_interval -1
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

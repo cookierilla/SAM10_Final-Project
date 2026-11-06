@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Infrastructure design · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>AWS infrastructure design</h1>
+<p class="todo">Replace this text diagram with a drawn one (draw.io is fine), saved as <code>evidence/E-18-infrastructure.png</code>, and keep it updated as things change.</p>
+<pre>
+Customer browser
+   │  HTTPS (Let's Encrypt certificate)
+   ▼
+Elastic IP ──► EC2 t3.small · Ubuntu 24.04 · encrypted 30 GB gp3 · ap-southeast-1
+                ├─ Caddy          reverse proxy, TLS, HTTP→HTTPS redirect
+                ├─ LibreChat      reskinned chat UI and user accounts
+                ├─ MongoDB        conversations and users (auth on, no public port)
+                └─ brew-gateway   our Node service
+                      ├─ reads café documents ◄── S3 bucket (versioned, private)
+                      ├─ reads Gemini API key ◄── SSM Parameter Store (SecureString)
+                      └─ sends the question ────► Google Gemini API (outside AWS)
+
+All container logs ──► CloudWatch Logs (/kape/*, 14-day retention) ──► metric filters, alarms ──► SNS ──► email
+CloudWatch agent ──► memory, disk metrics          CloudTrail ──► who did what
+Nightly backup ──► S3 backups/ (kept 14 days)
+</pre>
+
+<h2>How a question travels</h2>
+<ol>
+<li>The customer types a question in LibreChat over HTTPS. Caddy terminates TLS and forwards it to LibreChat.</li>
+<li>LibreChat sends the conversation to brew-gateway, its only "model", with a shared token.</li>
+<li>brew-gateway puts the café documents (loaded from S3) first as instructions, adds the Gemini key read from Parameter Store, and calls Gemini.</li>
+<li>The answer streams back the same way. brew-gateway writes one log line (question, time taken, success, versions) to CloudWatch.</li>
+</ol>
+
+<h2>Every service and what it is for</h2>
+<table>
+<tr><th>Service</th><th>Used for</th><th>Why this one</th></tr>
+<tr><td>EC2 (t3.small)</td><td>Runs all four containers</td><td class="todo">your reasoning (measured memory use locally was about 550 MB)</td></tr>
+<tr><td>Elastic IP</td><td>Stable public address and HTTPS name</td><td class="todo"></td></tr>
+<tr><td>S3</td><td>Café documents; database backups</td><td class="todo"></td></tr>
+<tr><td>SSM Parameter Store</td><td>Gemini key and app secrets</td><td class="todo"></td></tr>
+<tr><td>CloudWatch</td><td>Logs, metrics, dashboard, alarms</td><td class="todo"></td></tr>
+<tr><td>SNS</td><td>Alarm emails</td><td class="todo"></td></tr>
+<tr><td>CloudTrail</td><td>Audit trail</td><td class="todo"></td></tr>
+<tr><td>IAM</td><td>Instance role, admin role with MFA</td><td class="todo"></td></tr>
+</table>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

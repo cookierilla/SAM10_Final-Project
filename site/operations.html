@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitoring, backup and security · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>Monitoring, backup and restore, security</h1>
+
+<h2>Monitoring</h2>
+<p class="todo">Dashboard screenshot (E-06), the alarms list (E-07), the alert email with date and time (E-08), and one sentence per threshold explaining why.</p>
+<p>Every question is logged by brew-gateway as one JSON line: the question, how long it took, whether it succeeded, the HTTP status, and which gateway, content and model version answered (E-09, local run):</p>
+<pre>{"ts":"2026-11-06T13:04:21.927Z","service":"brew-gateway","event":"chat_request","question":"How much is an iced Spanish latte?","durationMs":3246,"httpStatus":200,"success":true,"emptyAnswer":false,"gatewayVersion":"0.1.0","contentVersion":"f86d7ec89709","model":"gemini-3.5-flash"}</pre>
+
+<h2>Backup and restore</h2>
+<p class="todo">What would have to be restored; backup settings (E-10); the restore test output and proof the data came back (E-11); RPO and RTO in two sentences.</p>
+
+<h2>Security: before and after</h2>
+<table>
+<tr><th>Problem found</th><th>Fix</th><th>Risk it addresses (one sentence)</th><th>Evidence</th></tr>
+<tr><td>Plain HTTP</td><td>HTTPS via Caddy + Let's Encrypt</td><td class="todo"></td><td></td></tr>
+<tr><td>Database without a password</td><td>MongoDB auth, no public port</td><td class="todo"></td><td></td></tr>
+<tr><td>Public default app secrets</td><td>Random secrets in Parameter Store</td><td class="todo"></td><td>E-13</td></tr>
+<tr><td>API key in a file</td><td>Parameter Store SecureString, read at runtime</td><td class="todo"></td><td>E-13</td></tr>
+<tr><td>Shared / root admin</td><td>Own IAM user + MFA; admin only via a role with MFA</td><td class="todo"></td><td>E-12</td></tr>
+<tr><td>SSH open to the internet</td><td>No port 22; Session Manager</td><td class="todo"></td><td></td></tr>
+<tr><td>No audit trail</td><td>CloudTrail</td><td class="todo"></td><td></td></tr>
+<tr><td>Unencrypted disk</td><td>EBS encryption</td><td class="todo"></td><td></td></tr>
+</table>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

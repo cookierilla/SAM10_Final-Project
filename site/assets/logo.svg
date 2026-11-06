@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Kapé Lumen logo">
+  <title>Kapé Lumen</title>
+  <circle cx="32" cy="32" r="31" fill="#8C522D"/>
+  <!-- steam / light rays -->
+  <path d="M25 14c-2 3 2 5 0 8M32 11c-2 3 2 5 0 8M39 14c-2 3 2 5 0 8" stroke="#FFF2DC" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- cup -->
+  <path d="M17 27h28v9a12 12 0 0 1-12 12h-4a12 12 0 0 1-12-12z" fill="#FFF2DC"/>
+  <path d="M45 30h3a5 5 0 0 1 0 10h-4" stroke="#FFF2DC" stroke-width="3" fill="none"/>
+  <!-- saucer -->
+  <rect x="13" y="50" width="38" height="3.5" rx="1.75" fill="#FFF2DC"/>
+  <!-- bean -->
+  <ellipse cx="31" cy="37" rx="4.5" ry="6" fill="#8C522D" transform="rotate(25 31 37)"/>
+  <path d="M29 32c3 3 1 7 4 10" stroke="#FFF2DC" stroke-width="1.2" fill="none"/>
+</svg>

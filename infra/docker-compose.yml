@@ -1,0 +1,106 @@
+# Kapé Lumen production stack (one EC2 instance). This is OUR deployment definition,
+# separate from LibreChat's own compose file, so the system can be rebuilt from the repo (WS-C.6).
+#
+#   Internet ──443──> caddy ──> api (LibreChat) ──> brew-gateway ──> Gemini API
+#                                   └──> mongodb (internal network only)
+#
+# Run on the instance with:  sudo /opt/kape/app/infra/deploy.sh
+# Secrets are NOT in this file. infra/render-env.sh writes them to /opt/kape/.env from SSM Parameter Store.
+
+# Logging: each container's stdout goes straight to CloudWatch Logs via the awslogs driver.
+# Log groups are pre-created with a retention period (docs/DEPLOY-AWS.md, step 6).
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/kape/data/caddy:/data
+    depends_on:
+      - api
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: /kape/caddy
+        awslogs-stream: "{{.Name}}"
+        mode: non-blocking
+
+  api:
+    # Pinned by digest: the exact LibreChat build we tested locally (v0.8.9-rc1, 2026-10-31).
+    image: registry.librechat.ai/librechat-ai/librechat-dev@sha256:9625652b9d9ac9fbf9ff3505fc34770f822c7aa079f58d06b4e66eed2dc93aeb
+    container_name: LibreChat
+    restart: always
+    env_file: /opt/kape/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3080
+      MONGO_URI: mongodb://kape:${MONGO_PASSWORD}@mongodb:27017/LibreChat?authSource=admin
+      SEARCH: "false"
+      DOMAIN_CLIENT: https://${SITE_ADDRESS}
+      DOMAIN_SERVER: https://${SITE_ADDRESS}
+    volumes:
+      - ../librechat/librechat.yaml:/app/librechat.yaml:ro
+      - ../librechat/assets/logo.svg:/app/client/dist/assets/logo.svg:ro
+      - /opt/kape/data/librechat/images:/app/client/public/images
+      - /opt/kape/data/librechat/uploads:/app/uploads
+      - /opt/kape/data/librechat/logs:/app/logs
+    depends_on:
+      - mongodb
+      - brew-gateway
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: /kape/librechat
+        awslogs-stream: "{{.Name}}"
+        mode: non-blocking
+
+  mongodb:
+    image: mongo:8.0.20
+    container_name: chat-mongodb
+    restart: always
+    environment:
+      # Auth ON (LibreChat's default compose runs --noauth). Password comes from SSM via .env.
+      MONGO_INITDB_ROOT_USERNAME: kape
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - /opt/kape/data/mongo:/data/db
+      - /opt/kape/backups:/backups
+    # No "ports:": only containers on this network can reach the database.
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: /kape/mongo
+        awslogs-stream: "{{.Name}}"
+        mode: non-blocking
+
+  brew-gateway:
+    build: ../gateway
+    image: brew-gateway:local
+    container_name: brew-gateway
+    restart: always
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      CONTENT_SOURCE: s3
+      CONTENT_BUCKET: ${CONTENT_BUCKET}
+      CONTENT_PREFIX: content/
+      KEY_SOURCE: ssm
+      SSM_KEY_NAME: /kape-lumen/gemini-api-key
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION}
+        awslogs-group: /kape/gateway
+        awslogs-stream: "{{.Name}}"
+        mode: non-blocking

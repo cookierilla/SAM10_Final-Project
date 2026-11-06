@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your system and system card · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>Your system, and the system card</h1>
+
+<h2>The reskin</h2>
+<div class="pair">
+<figure><img src="evidence/E-05-original-login.png" alt="Stock LibreChat login page"><figcaption>E-05 Before: stock LibreChat v0.8.9-rc1 login (LibreChat logo, green theme).</figcaption></figure>
+<figure><img src="evidence/E-01-kape-login.png" alt="Kapé Lumen login page"><figcaption>E-01 After: Kapé Lumen login, with our logo, cream and coffee theme, and privacy/terms links.</figcaption></figure>
+<figure><img src="evidence/E-05-original-chat.png" alt="Stock LibreChat chat screen"><figcaption>E-05 Before: many models and tools to choose from.</figcaption></figure>
+<figure><img src="evidence/E-01-kape-chat-spanish-latte.png" alt="Lumen answering a price question"><figcaption>E-01 After: one assistant, "Lumen · Virtual Barista", answering from the café's own menu (₱170 matches <code>content/menu.md</code>).</figcaption></figure>
+</div>
+<figure><img src="evidence/E-01-kape-terms-modal.png" alt="Terms pop-up"><figcaption>Every user accepts these terms first: fictional café, no allergy advice, no personal data.</figcaption></figure>
+
+<h1 style="margin-top:2em">System card: Kapé Lumen Assistant</h1>
+
+<h2>1. What it does</h2>
+<p class="todo">Two or three sentences a non-technical person could understand.</p>
+
+<h2>2. Who uses it, and who must not</h2>
+<ul><li>Intended users: <span class="todo">…</span></li>
+<li>Explicitly NOT for: allergy or medical advice, ordering or payment, any decision about an identifiable person.</li></ul>
+
+<h2>3. Base system</h2>
+<table>
+<tr><th>Name and version</th><td>LibreChat v0.8.9-rc1 (commit f4154b6, 2026-10-31)</td></tr>
+<tr><th>Source URL</th><td><a href="https://github.com/danny-avila/LibreChat">github.com/danny-avila/LibreChat</a></td></tr>
+<tr><th>Author</th><td>Danny Avila and the LibreChat contributors</td></tr>
+<tr><th>Licence</th><td><a href="https://github.com/danny-avila/LibreChat/blob/main/LICENSE">MIT</a></td></tr>
+<tr><th>What it did originally</th><td>A general-purpose ChatGPT-style interface for many AI providers, with accounts and saved conversations.</td></tr>
+</table>
+
+<h2>4. What I changed (the reskin)</h2>
+<table>
+<tr><th>Part</th><th>Original</th><th>Mine</th><th>Why</th></tr>
+<tr><td>Name / branding</td><td>LibreChat, feather logo, green</td><td>Kapé Lumen, coffee-cup logo, cream and brown theme</td><td class="todo"></td></tr>
+<tr><td>Data / content</td><td>None (general chat)</td><td>5 invented café documents in S3: menu, branches, loyalty card, policies, FAQ</td><td class="todo"></td></tr>
+<tr><td>Wording / prompts</td><td>Generic assistant</td><td>"Lumen", café welcome, terms pop-up, café-only rules (no allergy advice, no orders)</td><td class="todo"></td></tr>
+<tr><td>Interface</td><td>Model picker, agents, prompts, files, presets</td><td>One fixed assistant; everything else hidden</td><td class="todo"></td></tr>
+<tr><td>AWS services</td><td>None</td><td>S3 (content, backups), Parameter Store (secrets), CloudWatch, SNS, CloudTrail</td><td class="todo"></td></tr>
+</table>
+
+<h2>5. Data</h2>
+<ul>
+<li>Where it came from: written for this project; all invented (<code>content/*.md</code> in the repository).</li>
+<li>Size and format: 5 Markdown files, about 9 KB.</li>
+<li>Anything personal in it: no; all invented.</li>
+<li>Sent to a third-party AI service: the café documents and the customer's question go to Google Gemini. Users are told not to type personal data.</li>
+</ul>
+
+<h2>6. How good it is</h2>
+<ul>
+<li>The one number: <strong>10 of 10</strong> starter test questions correct (2026-11-06, gemini-3.5-flash-lite). <span class="todo">replace with the 30-question result</span></li>
+<li>How measured: <code>eval/run-eval.mjs</code> checks each answer for expected phrases and forbidden ones.</li>
+<li>An example it gets wrong: <span class="todo">be honest; find one in the 30-question run</span></li>
+</ul>
+
+<h2>7. How it is served</h2>
+<ul>
+<li>Where it runs: EC2 t3.small, ap-southeast-1, four Docker containers.</li>
+<li>The model: Google Gemini <code>gemini-3.5-flash-lite</code>, free tier.</li>
+<li>If the model is unavailable: the user sees "The AI model did not respond / is busy", and the failure is logged and counted.</li>
+</ul>
+
+<h2>8. Limitations and risks</h2>
+<p class="todo">What it cannot do; what could go wrong with the data; how it could be misused; what a user must always check (prices and hours with staff; allergies in person). Quote the free-tier limits you found (5/min and 20/day on gemini-3.5-flash).</p>
+
+<h2>9. Operational summary</h2>
+<ul>
+<li>Code: <a href="https://github.com/cookierilla/SAM10_Final-Project">github.com/cookierilla/SAM10_Final-Project</a></li>
+<li>Backed up: <span class="todo">nightly, kept 14 days (week 3)</span></li>
+<li>How we know it is healthy: <span class="todo">list the alarms (week 3)</span></li>
+<li>Contact: <span class="todo">your name / email</span></li>
+</ul>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

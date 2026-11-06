@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baseline · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>Baseline: the environment before I touched it</h1>
+<p class="todo">Describe stock LibreChat as its own docker-compose.yml runs it, with dates. docs/DEPLOY-AWS.md (Part F) lists what to cover.</p>
+<table>
+<tr><th>Area</th><th>Before (stock LibreChat)</th></tr>
+<tr><td>Transport</td><td>Plain HTTP on port 3080</td></tr>
+<tr><td>Database</td><td>MongoDB started with <code>--noauth</code></td></tr>
+<tr><td>App secrets</td><td>Public default values from <code>.env.example</code></td></tr>
+<tr><td>AI key</td><td>Stored in <code>.env</code> on disk</td></tr>
+<tr><td>Logs</td><td>Files in containers, no retention, no alerts</td></tr>
+<tr><td>Backups</td><td>None</td></tr>
+<tr><td>Containers running</td><td>7, including RAG API, vector DB, search and admin panel that we do not use</td></tr>
+</table>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

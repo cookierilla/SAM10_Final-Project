@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automation and incident · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>Automation, and the incident</h1>
+
+<h2>Automations</h2>
+<p class="todo">The two automations, what they do, and at least two unattended run timestamps each (E-14).</p>
+
+<h2>Incident</h2>
+<p class="todo">Pick the incident you write up. A real candidate already happened on 2026-11-06 (below); or create the disk-full fault in week 4.</p>
+<table>
+<tr><th>Started</th><td class="todo">time of the first failed question</td></tr>
+<tr><th>Noticed</th><td class="todo">when you saw the error</td></tr>
+<tr><th>Fixed</th><td class="todo">when the first answer worked</td></tr>
+<tr><th>Symptom</th><td>Every answer failed with "502 The AI model returned an error"; LibreChat retried for about 2 minutes.</td></tr>
+<tr><th>Root cause</th><td>Google retired <code>gemini-2.5-flash</code> for new API keys, so the gateway's default model returned 404 for every request.</td></tr>
+</table>
+<pre>upstream 404: "This model models/gemini-2.5-flash is no longer available to new users."</pre>
+<p class="todo">Prevention, and evidence that it worked; the runbook (Appendix D template).</p>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>
