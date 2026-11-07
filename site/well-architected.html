@@ -10,17 +10,50 @@
 <body>
 <main>
 <h1>Well-Architected review</h1>
-<p class="todo">Fill in after the first deployment works, then re-run after the incident (WS-F) and show the change. Verdict: good / adequate / gap.</p>
+<p class="lead">I reviewed the system against the six pillars of the AWS Well-Architected Framework twice: the <strong>first pass</strong> on 2026-11-07, as soon as the deployment worked (HTTPS, secrets and IAM in place, but no monitoring or backups yet), and the <strong>second pass</strong> on the same day after the monitoring, backups, automations and the incident fix. Verdicts: <span class="verdict-good">good</span>, <span class="verdict-adequate">adequate</span> or <span class="verdict-gap">gap</span>.</p>
+
 <table>
-<tr><th>Pillar</th><th>What it asks for</th><th>What my system does</th><th>Verdict (first pass)</th><th>Verdict (after WS-F)</th></tr>
-<tr><td>Operational Excellence</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>Security</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>Reliability</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>Performance Efficiency</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>Cost Optimization</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>Sustainability</td><td></td><td></td><td></td><td></td></tr>
+<tr><th>Pillar</th><th>What it asks for</th><th>What my system does now</th><th>First pass</th><th>Second pass</th></tr>
+<tr><td><strong>Operational Excellence</strong></td>
+<td>Run and monitor the workload, automate changes, learn from failures.</td>
+<td>Dashboard and ten alarms; every question logged; nightly quality check; a push to <code>main</code> is tested and deployed automatically; written runbook; the incident was investigated to its real cause and written up.</td>
+<td><span class="verdict-gap">gap</span>: logs only, deploys by hand</td>
+<td><span class="verdict-good">good</span></td></tr>
+<tr><td><strong>Security</strong></td>
+<td>Strong identity, least privilege, protected secrets, traceability, data protected in transit and at rest.</td>
+<td>MFA everywhere and admin only through an MFA role; least-privilege roles for the server and for GitHub (OIDC, no stored keys); secrets in Parameter Store; HTTPS; encrypted disk; no SSH; database not exposed; CloudTrail.</td>
+<td><span class="verdict-good">good</span></td>
+<td><span class="verdict-good">good</span>, and GitHub deploys hold no keys. Missing: GuardDuty and a web firewall.</td></tr>
+<tr><td><strong>Reliability</strong></td>
+<td>Recover from failure automatically, test recovery, scale to demand, avoid single points of failure.</td>
+<td>Nightly backups to S3, restore tested every Sunday; auto-recover and auto-reboot alarms; containers restart themselves; the restore crash was traced to a file limit and fixed. Still one server in one Availability Zone.</td>
+<td><span class="verdict-gap">gap</span>: no backups, no alarms</td>
+<td><span class="verdict-adequate">adequate</span>: recoverable, not highly available</td></tr>
+<tr><td><strong>Performance Efficiency</strong></td>
+<td>Choose the right resource size, measure performance, keep it responsive under load.</td>
+<td>t3.small chosen from measured memory use (about 550 MB locally, about half of 2 GB on AWS); unused services removed; answer time measured on every request (normally 1–3 s) with an alarm at 10 s. The free model tier limits how many questions per minute it can answer.</td>
+<td><span class="verdict-adequate">adequate</span>: sized, not measured</td>
+<td><span class="verdict-adequate">adequate</span>: measured; capped by the model's free tier</td></tr>
+<tr><td><strong>Cost Optimization</strong></td>
+<td>Pay only for what you use, know where money goes, switch off what is idle.</td>
+<td>$10 budget alert from day one; resources tagged <code>Project=SAM10</code>; the smallest instance that fits; free model tier and free DNS. The server runs around the clock even though a café assistant is idle at night.</td>
+<td><span class="verdict-adequate">adequate</span></td>
+<td><span class="verdict-adequate">adequate</span></td></tr>
+<tr><td><strong>Sustainability</strong></td>
+<td>Use the least resources needed; avoid idle and oversized capacity.</td>
+<td>One small instance; of the seven stock containers only LibreChat and MongoDB are kept (the RAG API, vector database, search and admin panel are not run), so four containers in total including Caddy and the gateway; logs kept 14 days and backups 14 days, not forever. Idle overnight capacity is the same weakness as under cost.</td>
+<td><span class="verdict-adequate">adequate</span></td>
+<td><span class="verdict-adequate">adequate</span></td></tr>
 </table>
-<p class="todo">Which pillar I optimised for, which I accepted as weaker and why, and the one gap I would fix first.</p>
+
+<h2>The trade-off I chose</h2>
+<p><strong>Optimised for: Security and Operational Excellence.</strong> A café assistant holds customer accounts and runs on a free model key, so the costly failures are a leaked key, an exposed database or a problem nobody notices. Those are cheap to prevent on one server, so I made them strong first.</p>
+<p><strong>Accepted as weaker: Reliability (availability) and Performance under load.</strong> Two servers behind a load balancer, or a managed database in two Availability Zones, would multiply the cost of a system that serves a handful of users, and the course limits the footprint. If the server dies, the data is safe and can be restored, but the site is down until it is rebuilt or AWS recovers it. A paid model tier would remove the request limits, but there is no budget for it.</p>
+
+<h2>The one gap I would fix first</h2>
+<p><strong>Everything (app, database, uploads and the newest local backups) lives on one server's disk in one Availability Zone.</strong> The nightly backup limits data loss to 24 hours, but rebuilding takes about 30 minutes of manual work. I would first add <strong>daily EBS snapshots with Amazon Data Lifecycle Manager</strong>, kept 7 days: it costs cents a month and needs no code, it cuts the rebuild to launching from a snapshot in minutes, and it also protects the server's configuration, not just the database. It is the largest improvement in recovery per peso spent.</p>
+
+<p class="todo">Optional, same credit: enter these answers in the free AWS Well-Architected Tool (console → Well-Architected Tool → Define workload), save its report as <code>E-17-well-architected-report.pdf</code>, and link it here.</p>
 </main>
 <script src="assets/site.js"></script>
 </body>

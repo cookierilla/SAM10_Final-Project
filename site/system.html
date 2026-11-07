@@ -19,66 +19,78 @@
 <figure><img src="evidence/E-01-kape-chat-spanish-latte.png" alt="Lumen answering a price question"><figcaption>E-01 After: one assistant, "Lumen · Virtual Barista", answering from the café's own menu (₱170 matches <code>content/menu.md</code>).</figcaption></figure>
 </div>
 <figure><img src="evidence/E-01-kape-terms-modal.png" alt="Terms pop-up"><figcaption>Every user accepts these terms first: fictional café, no allergy advice, no personal data.</figcaption></figure>
+<figure><img src="evidence/E-02-live-url-chat.png" alt="Kapé Lumen running at its public HTTPS address"><figcaption>E-02 The deployed system at <a href="https://47-131-78-149.sslip.io">https://47-131-78-149.sslip.io</a>, answering over HTTPS.</figcaption></figure>
 
 <h1 style="margin-top:2em">System card: Kapé Lumen Assistant</h1>
 
 <h2>1. What it does</h2>
-<p class="todo">Two or three sentences a non-technical person could understand.</p>
+<p>Lumen is a chat assistant on the Kapé Lumen café website. You type a question about the café, such as prices, opening hours, the loyalty card or house rules, and it answers in a sentence or two using only the café's own documents. If the documents do not say, it tells you to ask the staff instead of guessing.</p>
 
 <h2>2. Who uses it, and who must not</h2>
-<ul><li>Intended users: <span class="todo">…</span></li>
-<li>Explicitly NOT for: allergy or medical advice, ordering or payment, any decision about an identifiable person.</li></ul>
+<ul>
+<li><strong>Intended users:</strong> customers and would-be customers of the (fictional) café, looking for everyday information before or during a visit.</li>
+<li><strong>Explicitly NOT for:</strong> allergy, dietary or medical advice; ordering, reservations or payment; anything involving personal data; any decision about an identifiable person. Children should not use it without an adult, as with any public chat service.</li>
+</ul>
 
 <h2>3. Base system</h2>
 <table>
 <tr><th>Name and version</th><td>LibreChat v0.8.9-rc1 (commit f4154b6, 2026-10-31)</td></tr>
 <tr><th>Source URL</th><td><a href="https://github.com/danny-avila/LibreChat">github.com/danny-avila/LibreChat</a></td></tr>
 <tr><th>Author</th><td>Danny Avila and the LibreChat contributors</td></tr>
-<tr><th>Licence</th><td><a href="https://github.com/danny-avila/LibreChat/blob/main/LICENSE">MIT</a></td></tr>
+<tr><th>Licence</th><td><a href="https://github.com/danny-avila/LibreChat/blob/main/LICENSE">MIT</a>: allows use, change and redistribution, including rebranding, provided the copyright and licence notice are kept. We credit it here, in the site footer and in the repository README.</td></tr>
 <tr><th>What it did originally</th><td>A general-purpose ChatGPT-style interface for many AI providers, with accounts and saved conversations.</td></tr>
 </table>
 
 <h2>4. What I changed (the reskin)</h2>
 <table>
 <tr><th>Part</th><th>Original</th><th>Mine</th><th>Why</th></tr>
-<tr><td>Name / branding</td><td>LibreChat, feather logo, green</td><td>Kapé Lumen, coffee-cup logo, cream and brown theme</td><td class="todo"></td></tr>
-<tr><td>Data / content</td><td>None (general chat)</td><td>5 invented café documents in S3: menu, branches, loyalty card, policies, FAQ</td><td class="todo"></td></tr>
-<tr><td>Wording / prompts</td><td>Generic assistant</td><td>"Lumen", café welcome, terms pop-up, café-only rules (no allergy advice, no orders)</td><td class="todo"></td></tr>
-<tr><td>Interface</td><td>Model picker, agents, prompts, files, presets</td><td>One fixed assistant; everything else hidden</td><td class="todo"></td></tr>
-<tr><td>AWS services</td><td>None</td><td>S3 (content, backups), Parameter Store (secrets), CloudWatch, SNS, CloudTrail</td><td class="todo"></td></tr>
+<tr><td>Name / branding</td><td>LibreChat, feather logo, green</td><td>Kapé Lumen, coffee-cup logo, cream and brown theme</td><td>A customer should feel they are on the café's site, not a developer tool.</td></tr>
+<tr><td>Data / content</td><td>None (general chat)</td><td>5 invented café documents in S3: menu, branches, loyalty card, policies, FAQ</td><td>Answers must come from the café's facts, and staff can update them without a code change.</td></tr>
+<tr><td>Wording / prompts</td><td>Generic assistant</td><td>"Lumen", café welcome, terms pop-up, café-only rules (no allergy advice, no orders)</td><td>Keeps it on topic and makes the safety limits explicit to the model and to the user.</td></tr>
+<tr><td>Interface</td><td>Model picker, agents, prompts, files, presets</td><td>One fixed assistant; everything else hidden</td><td>Customers need one thing; every extra feature is something to secure, explain and pay for.</td></tr>
+<tr><td>AWS services</td><td>None</td><td>S3 (content, backups), Parameter Store (secrets), CloudWatch, SNS, CloudTrail, Systems Manager</td><td>Content and secrets live outside the code; the system can be monitored, alerted on, audited and rebuilt.</td></tr>
 </table>
 
 <h2>5. Data</h2>
 <ul>
-<li>Where it came from: written for this project; all invented (<code>content/*.md</code> in the repository).</li>
-<li>Size and format: 5 Markdown files, about 9 KB.</li>
-<li>Anything personal in it: no; all invented.</li>
-<li>Sent to a third-party AI service: the café documents and the customer's question go to Google Gemini. Users are told not to type personal data.</li>
+<li>Where it came from: written for this project; all invented (<code>content/*.md</code> in the repository, synced to a versioned S3 bucket).</li>
+<li>Size and format: 5 Markdown files, about 7.5 KB.</li>
+<li>Anything personal in it: no; all invented. Addresses and emails are marked "(fictional)".</li>
+<li>Sent to a third-party AI service: the café documents and the customer's question go to Google Gemini. Users are told in the terms pop-up not to type personal data, and the documents contain none.</li>
 </ul>
 
 <h2>6. How good it is</h2>
 <ul>
-<li>The one number: <strong>10 of 10</strong> starter test questions correct (2026-11-06, gemini-3.5-flash-lite). <span class="todo">replace with the 30-question result</span></li>
-<li>How measured: <code>eval/run-eval.mjs</code> checks each answer for expected phrases and forbidden ones.</li>
-<li>An example it gets wrong: <span class="todo">be honest; find one in the 30-question run</span></li>
+<li>The one number: <strong>10 of 10</strong> test questions correct: on 2026-11-06 (local) and on AWS on 2026-11-07 05:46 UTC, and every night since by the automatic quality check.</li>
+<li>How measured: <code>eval/run-eval.mjs</code> sends each question through the real gateway and model, and checks the answer for expected phrases (for example "170" for the latte price) and forbidden ones (for example "safe for you" on the allergy question).</li>
+<li>What the 10 cover: opening hours (2), menu price, loyalty stamps, pets, an allergy question that must be refused, the Wi-Fi password (which it must not know), reservations, student discount, and an out-of-scope request (ordering pizza from next door) that it must decline.</li>
+<li>An example it gets wrong: on 2026-11-06 the same allergy question that normally gets a safe refusal returned an error instead, because the free model quota (20 requests a day on <code>gemini-3.5-flash</code>) was used up; see test 3 on <a href="results.html">Results</a>. Ten questions is also a small sample: a phrase check can pass an answer that is technically correct but badly worded.</li>
 </ul>
 
 <h2>7. How it is served</h2>
 <ul>
-<li>Where it runs: EC2 t3.small, ap-southeast-1, four Docker containers.</li>
+<li>Where it runs: one EC2 t3.small (2 vCPU, 2 GB RAM), ap-southeast-1 (Singapore), four Docker containers: Caddy (HTTPS), LibreChat (the chat app), MongoDB (accounts and conversations) and brew-gateway (my small service between LibreChat and the model).</li>
+<li>What calls it: customers' browsers at <a href="https://47-131-78-149.sslip.io">https://47-131-78-149.sslip.io</a>; LibreChat calls brew-gateway's OpenAI-style <code>/v1/chat/completions</code>.</li>
 <li>The model: Google Gemini <code>gemini-3.5-flash-lite</code>, free tier.</li>
-<li>If the model is unavailable: the user sees "The AI model did not respond / is busy", and the failure is logged and counted.</li>
+<li>If the model is unavailable: brew-gateway returns a clear message ("The assistant is busy… try again in a minute", or "The AI model did not respond"), logs the failure, and the <code>kape-answers-failing</code> alarm emails me when 3 or more fail within 5 minutes.</li>
 </ul>
 
 <h2>8. Limitations and risks</h2>
-<p class="todo">What it cannot do; what could go wrong with the data; how it could be misused; what a user must always check (prices and hours with staff; allergies in person). Quote the free-tier limits you found (5/min and 20/day on gemini-3.5-flash).</p>
+<ul>
+<li><strong>What it cannot do:</strong> know anything not in the five documents (today's specials, stock, queue length); take orders or bookings; remember who you are between visits beyond your saved chat history.</li>
+<li><strong>Free-tier limits:</strong> the model has per-minute and per-day request limits. Busy periods will hit them, and customers will see "busy" messages. That is acceptable for a demo, not for a real café.</li>
+<li><strong>What could go wrong with the data:</strong> if a document is out of date (a price changes), Lumen will confidently quote the old price. The documents are versioned in S3 and in git, but someone has to update them.</li>
+<li><strong>Wrong answers:</strong> language models can still make things up or misread a document, especially for questions the documents only half answer.</li>
+<li><strong>How it could be misused:</strong> people may try to make it say things outside its role (prompt injection), or paste personal data into it. It has no tools or access to anything except the documents, so the harm is limited to a bad answer.</li>
+<li><strong>What a user must always check themselves:</strong> anything about allergies or ingredients (ask the staff in person), and prices and holiday hours before relying on them.</li>
+</ul>
 
 <h2>9. Operational summary</h2>
 <ul>
-<li>Code: <a href="https://github.com/cookierilla/SAM10_Final-Project">github.com/cookierilla/SAM10_Final-Project</a></li>
-<li>Backed up: <span class="todo">nightly, kept 14 days (monitoring and backups phase)</span></li>
-<li>How we know it is healthy: <span class="todo">list the alarms (monitoring and backups phase)</span></li>
-<li>Contact: <span class="todo">your name / email</span></li>
+<li>Code: <a href="https://github.com/cookierilla/SAM10_Final-Project">github.com/cookierilla/SAM10_Final-Project</a>. A push to <code>main</code> is tested and deployed automatically.</li>
+<li>Backed up: every night at 02:00 (Philippine time) to S3, kept 14 days; the restore is tested every Sunday.</li>
+<li>How we know it is healthy: ten CloudWatch alarms (site down, server status checks, CPU, memory, disk, failing answers, slow answers, server errors, missing backup) email the operator, plus a nightly quality-check email.</li>
+<li>Contact: Renzo, the operator (GitHub <a href="https://github.com/cookierilla">cookierilla</a>).</li>
 </ul>
 </main>
 <script src="assets/site.js"></script>

@@ -52,8 +52,8 @@ Our first guess (memory) was wrong. Restoring one collection at a time made the 
 - `E-11-restore-test.png`: the failure (137) and the passing restore at 04:20:10.
 - `E-15-oom-evidence.png`: no OOM-killer messages; `restarts=1`, `oomkilled=false`, restarted at 04:17:16.84.
 - `E-15-mongo-too-many-open-files.txt`: the MongoDB log lines above (from CloudWatch `/kape/mongo`).
-- _Add after the deploy:_ the limit inside the container is 64000:
-  `sudo docker exec chat-mongodb sh -c 'grep "open files" /proc/1/limits'`
+- `E-15-ulimit-fixed.png`: after the deploy, `Max open files 64000 64000` inside `chat-mongodb`.
+- `E-15-restore-after-fix.png`: 14:23:52 UTC, restore test with the new limit: OK in 13 s, counts match.
 - _Add:_ the unattended Sunday restore tests (timestamps from `/kape/host`, stream `*/automation`).
 
 ## What we learned

@@ -7,6 +7,7 @@ const pages = [
   ['well-architected.html', 'Well-Architected'],
   ['operations.html', 'Monitoring · Backup · Security'],
   ['automation-incident.html', 'Automation & incident'],
+  ['runbook.html', 'Runbook'],
   ['results.html', 'Results'],
   ['next-steps.html', 'Next steps'],
   ['declaration.html', 'Declaration'],

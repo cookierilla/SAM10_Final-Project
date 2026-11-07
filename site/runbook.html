@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runbook: restore from a backup · Kapé Lumen</title>
+<link rel="icon" href="assets/logo.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<h1>RUNBOOK: Restore Kapé Lumen from a backup</h1>
+<table>
+<tr><th>Owner</th><td>Renzo</td><th>Last tested</th><td>2026-11-07 (test restore on AWS, 13 s, after the incident fix)</td></tr>
+<tr><th>Takes</th><td>about 5 minutes</td><th>Ask</th><td>Renzo</td></tr>
+</table>
+
+<h2>1. What this is for</h2>
+<p>Getting customers' accounts and chat history back after the database is lost, damaged or wrongly changed, using the nightly backup in S3.</p>
+
+<h2>2. How you know you need it</h2>
+<ul>
+<li><code>kape-site-down</code> or <code>kape-http-5xx</code> fired, and LibreChat's log (<code>/kape/librechat</code>) shows MongoDB errors; or</li>
+<li>a user reports their chats are gone or wrong; or</li>
+<li><code>kape-backup-missing</code> fired, or the Sunday restore test emailed <strong>"restore test FAILED"</strong>. In that case read Gotchas first.</li>
+</ul>
+<p>Command that shows the problem (Session Manager on the instance):</p>
+<pre>sudo docker exec chat-mongodb sh -c 'mongosh --quiet -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.getSiblingDB(\"LibreChat\").getCollectionNames().length"'</pre>
+<p>A healthy database prints about 60 (collections). An error or <code>0</code> means the data is missing.</p>
+
+<h2>3. What it affects</h2>
+<p>During a <strong>live</strong> restore nobody can sign in or chat: LibreChat is stopped for the length of the restore (about 15 s for today's data). Anything written since the last backup (02:00 Philippine time) is lost. That gap is our RPO: up to 24 hours.</p>
+
+<h2>4. How to do it</h2>
+<p>Connect: AWS console → EC2 → <code>kape-lumen</code> → <strong>Connect → Session Manager → Connect</strong>.</p>
+<p><strong>Step 1.</strong> See which backups exist:</p>
+<pre>aws s3 ls s3://$(sudo grep ^CONTENT_BUCKET= /opt/kape/.env | cut -d= -f2)/backups/</pre>
+<p>→ you should see one folder per night, for example <code>PRE 20261107T041453Z/</code>. Pick the newest one from <strong>before</strong> the problem started.</p>
+<p><strong>Step 2.</strong> Prove that backup is good, without touching the live site:</p>
+<pre>sudo /opt/kape/app/infra/ops/restore.sh --test 20261107T041453Z</pre>
+<p>→ you should see <code>expected counts: {...}</code>, then the identical <code>restored counts: {...}</code>, then <code>restore test of … OK</code>.</p>
+<p><strong>Step 3.</strong> Restore it for real:</p>
+<pre>sudo /opt/kape/app/infra/ops/restore.sh --live --yes 20261107T041453Z</pre>
+<p>→ you should see <code>stopping LibreChat</code>, the counts match, <code>started LibreChat again</code>, <code>restore live … OK</code>.</p>
+
+<h2>5. How to check it worked</h2>
+<ul>
+<li>☐ The original symptom is gone: <code>curl -s https://47-131-78-149.sslip.io/health</code> prints <code>OK</code>.</li>
+<li>☐ Sign in at <a href="https://47-131-78-149.sslip.io">https://47-131-78-149.sslip.io</a> and ask <strong>"How much is an iced Spanish latte?"</strong>. The answer is ₱170.</li>
+<li>☐ No new alarms for 10 minutes (CloudWatch → Alarms, or the <code>kape-lumen</code> dashboard).</li>
+</ul>
+
+<h2>6. How to undo it</h2>
+<p>The live restore keeps the replaced upload folders as <code>/opt/kape/data/librechat/{images,uploads}.before-restore-&lt;time&gt;</code>. To go back, move them back and restore a different (newer) backup with Step 3. The database you replaced is <strong>not</strong> kept, so if it might still be needed, run <code>sudo /opt/kape/app/infra/ops/backup.sh</code> <strong>before</strong> Step 3.</p>
+
+<h2>7. Gotchas</h2>
+<ul>
+<li><strong>"FAILED (test): line … exited with status 137".</strong> MongoDB crashed and restarted during the restore, killing <code>mongorestore</code> with it. On 2026-11-07 the cause was "Too many open files" (see the <a href="automation-incident.html#incident">incident</a>). Check MongoDB's log in CloudWatch <code>/kape/mongo</code>, or:
+<pre>sudo docker logs --since 10m chat-mongodb 2>&amp;1 | grep -E '"s":"(E|F)"'</pre>
+Check the open-file limit is 64000:
+<pre>sudo docker exec chat-mongodb sh -c 'grep "open files" /proc/1/limits'</pre>
+If it shows 1024, redeploy (<code>sudo /opt/kape/app/infra/deploy.sh</code>), which applies the limit from <code>docker-compose.yml</code>.</li>
+<li><strong>"checksum mismatch: backup is damaged".</strong> Don't use that backup. Pick the previous night's.</li>
+<li><strong>Never edit scripts on the server.</strong> <code>deploy.sh</code> will then refuse to update (<code>git pull</code> fails). Fix the script in the repository and push. If the server already has a local edit: <code>sudo git -C /opt/kape/app checkout -- .</code></li>
+<li>The bucket keeps backups for <strong>14 days</strong> (lifecycle rule). Older ones are gone.</li>
+<li>All times in folder names are <strong>UTC</strong>. 02:00 Philippine time is 18:00 UTC the day before.</li>
+</ul>
+
+<h2>8. Change history</h2>
+<ul>
+<li>2026-11-07: first version. Tested on AWS: test restore OK in 14 s. Restore limited to one collection at a time after the 137 failure.</li>
+<li>2026-11-07: root cause found (MongoDB's 1024 open-file limit) and raised to 64000; Gotchas updated; re-tested OK in 13 s.</li>
+</ul>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

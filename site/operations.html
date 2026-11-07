@@ -11,26 +11,101 @@
 <main>
 <h1>Monitoring, backup and restore, security</h1>
 
-<h2>Monitoring</h2>
-<p class="todo">Dashboard screenshot (E-06), the alarms list (E-07), the alert email with date and time (E-08), and one sentence per threshold explaining why.</p>
-<p>Every question is logged by brew-gateway as one JSON line: the question, how long it took, whether it succeeded, the HTTP status, and which gateway, content and model version answered (E-09, local run):</p>
-<pre>{"ts":"2026-11-06T13:04:21.927Z","service":"brew-gateway","event":"chat_request","question":"How much is an iced Spanish latte?","durationMs":3246,"httpStatus":200,"success":true,"emptyAnswer":false,"gatewayVersion":"0.1.0","contentVersion":"f86d7ec89709","model":"gemini-3.5-flash"}</pre>
+<h2 id="monitoring">Monitoring</h2>
+<p>Every container sends its logs straight to CloudWatch (one log group each: <code>/kape/caddy</code>, <code>/kape/librechat</code>, <code>/kape/mongo</code>, <code>/kape/gateway</code>, plus <code>/kape/host</code> for the server and the scheduled jobs), kept for 14 days. Metric filters turn the gateway's and Caddy's log lines into numbers, the CloudWatch agent adds memory and disk, and the scheduled jobs publish their own results.</p>
 
-<h2>Backup and restore</h2>
-<p class="todo">What would have to be restored; backup settings (E-10); the restore test output and proof the data came back (E-11); RPO and RTO in two sentences.</p>
+<figure><img src="evidence/E-06-dashboard.png" alt="CloudWatch dashboard kape-lumen"><figcaption>E-06 The <code>kape-lumen</code> CloudWatch dashboard, 2026-11-07: the state of all ten alarms; what customers feel (site up, questions answered vs failed, answer time median and slowest 10%, web requests and server errors); the server (CPU and burst credits, memory, swap and disk, EC2 health checks); and the nightly jobs. Alarm thresholds are drawn as lines on each graph.</figcaption></figure>
+<p class="todo">After a few days of use, retake this as <code>E-06-dashboard-1w.png</code> with the 1-week view, so the graphs show the nightly jobs and real traffic.</p>
 
-<h2>Security: before and after</h2>
+<h3>The ten alarms, and why each threshold</h3>
+<p>All ten email me through the SNS topic <code>kape-alerts</code>, both when they go into alarm and when they recover.</p>
 <table>
-<tr><th>Problem found</th><th>Fix</th><th>Risk it addresses (one sentence)</th><th>Evidence</th></tr>
-<tr><td>Plain HTTP</td><td>HTTPS via Caddy + Let's Encrypt</td><td class="todo"></td><td></td></tr>
-<tr><td>Database without a password</td><td>MongoDB auth, no public port</td><td class="todo"></td><td></td></tr>
-<tr><td>Public default app secrets</td><td>Random secrets in Parameter Store</td><td class="todo"></td><td>E-13</td></tr>
-<tr><td>API key in a file</td><td>Parameter Store SecureString, read at runtime</td><td class="todo"></td><td>E-13</td></tr>
-<tr><td>Shared / root admin</td><td>Own IAM user + MFA; admin only via a role with MFA</td><td class="todo"></td><td>E-12</td></tr>
-<tr><td>SSH open to the internet</td><td>No port 22; Session Manager</td><td class="todo"></td><td></td></tr>
-<tr><td>No audit trail</td><td>CloudTrail</td><td class="todo"></td><td></td></tr>
-<tr><td>Unencrypted disk</td><td>EBS encryption</td><td class="todo"></td><td></td></tr>
+<tr><th>Alarm</th><th>Fires when</th><th>Why this threshold</th></tr>
+<tr><td><code>kape-site-down</code></td><td>The minute-by-minute check of <code>https://…/health</code> fails 3 minutes in a row (no data also counts as down)</td><td>Three misses rules out one slow request but still tells me within about 3 minutes; missing data counts because a dead server sends nothing.</td></tr>
+<tr><td><code>kape-answers-failing</code></td><td>3 or more questions fail in 5 minutes</td><td>The site can be "up" while every answer fails (expired key, quota); this catches the product being broken, not just the server.</td></tr>
+<tr><td><code>kape-answers-slow</code></td><td>90% of answers take longer than 10 s, in 2 of 3 five-minute periods</td><td>Normal answers take 1–3 s; 10 s is where a customer gives up. Using the 90th percentile ignores one odd slow answer.</td></tr>
+<tr><td><code>kape-http-5xx</code></td><td>5 or more server errors in 5 minutes</td><td>A few errors happen during a deploy; five in five minutes means something is really wrong.</td></tr>
+<tr><td><code>kape-cpu-high</code></td><td>CPU above 80% for 15 minutes</td><td>A t3.small earns CPU credits slowly; staying this high means a runaway process and would soon throttle the server.</td></tr>
+<tr><td><code>kape-memory-high</code></td><td>Memory above 85% for 10 minutes</td><td>With 2 GB and no room to spare, sustained 85% means a leak or a job that does not fit, before anything is killed.</td></tr>
+<tr><td><code>kape-disk-high</code></td><td>Disk more than 80% full</td><td>Leaves several GB and time to clean up before the database cannot write.</td></tr>
+<tr><td><code>kape-backup-missing</code></td><td>No successful backup in 24 hours (no data also counts)</td><td>Backups run nightly; one missed night is the earliest it can be noticed, and a silently broken backup is the worst kind.</td></tr>
+<tr><td><code>kape-ec2-hardware-check</code></td><td>AWS's host check fails for 2 minutes</td><td>Also <strong>recovers</strong> the instance onto healthy hardware automatically.</td></tr>
+<tr><td><code>kape-ec2-os-check</code></td><td>The server's own status check fails for 3 minutes</td><td>Also <strong>reboots</strong> the instance automatically; a frozen server will not fix itself.</td></tr>
 </table>
+<figure><img src="evidence/E-07-alarms-list.png" alt="CloudWatch alarms list"><figcaption>E-07 All ten <code>kape-</code> alarms in CloudWatch, in the OK state after setup.</figcaption></figure>
+
+<h3>Proof that an alert reached a person</h3>
+<div class="pair">
+<figure><img src="evidence/E-08-sns-subscription-confirmed.png" alt="SNS subscription confirmed"><figcaption>E-08 The email subscription to <code>kape-alerts</code>, confirmed.</figcaption></figure>
+<figure><img src="evidence/E-08-alarm-email.png" alt="Alarm email in Gmail"><figcaption>E-08 The alarm email for <code>kape-answers-failing</code>, received Saturday 07 November 2026, 04:21:05 UTC (12:21 Philippine time). I forced the alarm state to test the whole path, then it returned to OK by itself.</figcaption></figure>
+</div>
+
+<h3>Every request is logged</h3>
+<p>brew-gateway writes one JSON line per question: the question, how long it took, whether it succeeded, the HTTP status, whether the answer was empty, and which gateway, content and model version answered. This line comes from a local test run (E-09):</p>
+<pre>{"ts":"2026-11-06T13:09:18.509Z","service":"brew-gateway","event":"chat_request","question":"What time does the Session Road branch open on Saturday?","durationMs":2185,"httpStatus":200,"success":true,"emptyAnswer":false,"gatewayVersion":"0.1.0","contentVersion":"f86d7ec89709","model":"gemini-3.5-flash-lite"}</pre>
+<p class="todo">Replace this with a line from AWS: CloudWatch → Log groups → <code>/kape/gateway</code> → search <code>chat_request</code>, copy one line (check it has no personal data).</p>
+<figure><img src="evidence/E-09-log-groups-retention.png" alt="CloudWatch log groups with 14-day retention"><figcaption>E-09 The five <code>/kape/*</code> log groups, each with 14-day retention (not "Never expire").</figcaption></figure>
+
+<h2 id="backup">Backup and restore</h2>
+<h3>What would have to be restored</h3>
+<table>
+<tr><th>What</th><th>Where it lives</th><th>How it is protected</th></tr>
+<tr><td>User accounts and conversations</td><td>MongoDB on the server's disk</td><td>Nightly <code>mongodump</code> to S3, kept 14 days</td></tr>
+<tr><td>Uploaded files and images</td><td><code>/opt/kape/data/librechat</code></td><td>In the same nightly backup (tar file)</td></tr>
+<tr><td>Café documents</td><td>S3 <code>content/</code></td><td>S3 versioning, and every version is also in git</td></tr>
+<tr><td>Configuration (compose file, Caddy, LibreChat settings, scripts, alarms)</td><td>The git repository</td><td>Git history on GitHub; the server is rebuilt from it by <code>bootstrap.sh</code></td></tr>
+<tr><td>Secrets (Gemini key, database password, app keys)</td><td>SSM Parameter Store</td><td>Stored by AWS, never on GitHub; the server's <code>.env</code> is regenerated from them</td></tr>
+</table>
+
+<h3>How the backup works</h3>
+<p>Every night at 02:00 Philippine time, <code>infra/ops/backup.sh</code> dumps the database (compressed), packs the uploads, writes a manifest with the number of documents in each collection and SHA-256 checksums of every file, and uploads all four files to <code>s3://…/backups/&lt;time&gt;/</code>. It checks that all four arrived, keeps three nights on the server, and publishes <code>BackupSuccess</code>; if anything fails it publishes 0 and emails me. An S3 lifecycle rule deletes backups after 14 days, and versioning is on for the whole bucket.</p>
+<div class="pair">
+<figure><img src="evidence/E-10-backup-run.png" alt="Backup script output"><figcaption>E-10 The first backup on AWS, 2026-11-07 04:14:53 UTC: dump, uploads, manifest, checksums, all uploaded and verified.</figcaption></figure>
+<figure><img src="evidence/E-10-backup-in-s3.png" alt="Backup folder in S3"><figcaption>E-10 The backup folder in S3 with its four files.</figcaption></figure>
+</div>
+<figure><img src="evidence/E-10-s3-versioning.png" alt="S3 versioning enabled"><figcaption>E-10 Versioning enabled on the content bucket.</figcaption></figure>
+
+<h3>The restore test</h3>
+<p><code>infra/ops/restore.sh --test</code> downloads a backup from S3, checks every file's checksum, restores the database into a separate copy (<code>LibreChat_restoretest</code>) so the live site is untouched, and compares the number of documents in every collection with the manifest. It runs by itself every Sunday at 03:30. The first run failed, which became the <a href="automation-incident.html#incident">incident</a>; after the fix it passes.</p>
+<div class="pair">
+<figure><img src="evidence/E-11-restore-test.png" alt="Restore test output"><figcaption>E-11 2026-11-07: the first restore test killed (exit 137) at 04:17:16 UTC, then passing at 04:20:10: expected and restored counts identical, 14 s.</figcaption></figure>
+<figure><img src="evidence/E-15-restore-after-fix.png" alt="Restore test after the fix"><figcaption>After the root-cause fix, 2026-11-07 14:23:52 UTC: OK in 13 s, every collection's count matches the backup.</figcaption></figure>
+</div>
+<p>The live restore (<code>restore.sh --live</code>) follows the <a href="runbook.html">restore runbook</a>: it stops LibreChat, replaces the database, puts the uploads back, and starts it again.</p>
+
+<h3>RPO and RTO</h3>
+<p><strong>RPO (how much we could lose): up to 24 hours</strong>: anything written after the last 02:00 backup, which for a café FAQ assistant is a few chat histories. <strong>RTO (how long until it works again): about 5 minutes</strong> if the server is fine and only the data is lost (the restore itself took 13–14 s); about 30 minutes to rebuild a new server from the repository and Parameter Store and then restore.</p>
+
+<h2 id="security">Security: before and after</h2>
+<table>
+<tr><th>Problem found</th><th>Fix</th><th>Risk it addresses</th><th>Evidence</th></tr>
+<tr><td>Plain HTTP</td><td>HTTPS via Caddy and a Let's Encrypt certificate; HTTP redirects to HTTPS</td><td>Stops anyone on the network reading or changing passwords and chats in transit.</td><td>E-02</td></tr>
+<tr><td>Database without a password</td><td>MongoDB authentication on; no database port published</td><td>Even something inside the server's network cannot read or wipe the data without the password, and nothing outside can reach it at all.</td><td><code>docker-compose.yml</code></td></tr>
+<tr><td>Public default app secrets</td><td>Random secrets generated per deployment, stored in Parameter Store</td><td>Nobody can forge sign-in tokens using the keys published with LibreChat.</td><td>E-13</td></tr>
+<tr><td>API key in a file</td><td>Parameter Store SecureString, read by the gateway at runtime</td><td>The Gemini key is never in the code, the repository or a screenshot, so it cannot leak through them.</td><td>E-13</td></tr>
+<tr><td>Root / shared admin</td><td>Root has MFA and is not used; my own IAM user (read-only, MFA); admin only by switching into a role that requires MFA</td><td>A stolen password alone cannot change anything, and day-to-day work cannot accidentally do damage.</td><td>E-12</td></tr>
+<tr><td>Broad server permissions</td><td>The server's role can do only what it needs: read its own parameters and bucket, write backups, logs and metrics, and send to the alert topic</td><td>If the server were compromised, the attacker gets the smallest possible set of permissions.</td><td>E-12</td></tr>
+<tr><td>SSH open to the internet</td><td>No port 22; admin shell through Session Manager</td><td>Removes the most-attacked door on any internet server, and there are no SSH keys to lose.</td><td>E-12</td></tr>
+<tr><td>No audit trail</td><td>CloudTrail recording in the region</td><td>Every AWS change is recorded with who made it and when.</td><td>E-12</td></tr>
+<tr><td>Unencrypted disk</td><td>EBS encryption</td><td>A copied disk or snapshot is unreadable without AWS's key.</td><td class="todo">screenshot EC2 → Volumes → Encryption: Encrypted, as <code>E-12-ebs-encrypted.png</code></td></tr>
+<tr><td>Deploy credentials</td><td>GitHub Actions signs in with short-lived OIDC tokens; the role works only for <code>main</code> of this repository and can only deploy to this one server</td><td>There are no long-lived AWS keys stored in GitHub to steal.</td><td>E-14</td></tr>
+<tr><td>Personal data to a third party</td><td>Only invented café documents and the question go to Gemini; the terms pop-up tells users not to type personal data</td><td>Nothing personal leaves the account through the model.</td><td>E-01</td></tr>
+<tr><td>Surprise bills</td><td>$10 monthly budget alert, set before anything else</td><td>A runaway job or forgotten resource is noticed in days, not at the end of the month.</td><td>E-16</td></tr>
+</table>
+<div class="pair">
+<figure><img src="evidence/E-12-root-mfa.png" alt="Root account MFA"><figcaption>E-12 MFA on the root account.</figcaption></figure>
+<figure><img src="evidence/E-12-iam-users.png" alt="IAM users"><figcaption>E-12 IAM users: my own named user with MFA; no shared logins.</figcaption></figure>
+<figure><img src="evidence/E-12-iam-user-permissions.png" alt="IAM user permissions"><figcaption>E-12 My user's permissions: read-only, plus permission to switch into the admin role.</figcaption></figure>
+<figure><img src="evidence/E-12-admin-role-mfa-trust.png" alt="Admin role trust policy requiring MFA"><figcaption>E-12 The admin role can only be assumed with MFA.</figcaption></figure>
+<figure><img src="evidence/E-12-cli-user-and-role.png" alt="CLI identity"><figcaption>E-12 The command line works through the role (<code>aws sts get-caller-identity</code>).</figcaption></figure>
+<figure><img src="evidence/E-12-ec2-role-least-privilege.png" alt="EC2 role permissions"><figcaption>E-12 The server's role: only its own parameters, bucket, logs and metrics.</figcaption></figure>
+<figure><img src="evidence/E-12-security-group-no-ssh.png" alt="Security group"><figcaption>E-12 The security group: only 80 and 443; no SSH.</figcaption></figure>
+<figure><img src="evidence/E-12-cloudtrail.png" alt="CloudTrail"><figcaption>E-12 CloudTrail recording in ap-southeast-1.</figcaption></figure>
+<figure><img src="evidence/E-13-parameter-store.png" alt="Parameter Store"><figcaption>E-13 Secrets in Parameter Store as SecureString (values hidden).</figcaption></figure>
+<figure><img src="evidence/E-16-budget-alert.png" alt="Budget alert"><figcaption>E-16 The $10 monthly budget alert.</figcaption></figure>
+</div>
+<p>Checked: no key, password or token is in the repository or its history (<code>gitleaks detect</code> over the whole history). Screenshots are shown unblurred: they contain the AWS account number and my own email address, but no keys, tokens or passwords (checked).</p>
+<p class="todo">Before submitting: run <code>gitleaks detect</code> on the full history and write the date and result here.</p>
 </main>
 <script src="assets/site.js"></script>
 </body>

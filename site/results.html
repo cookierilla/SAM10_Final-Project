@@ -10,32 +10,46 @@
 <body>
 <main>
 <h1>Results: before and after</h1>
-<p class="todo">Same metric, same method, same length of period on both sides, date range next to every number. Include cost and at least one graph.</p>
+<p class="lead">Every number here says how it was measured and over which dates. "Before" is the stock setup described on the <a href="baseline.html">Baseline</a> page; "after" is Kapé Lumen as it runs on AWS now. Where the stock setup simply could not be measured (it had no monitoring), I say so instead of inventing a number.</p>
 
 <h2>Three test questions</h2>
 <table>
 <tr><th>#</th><th>Question</th><th>Answer</th><th>Result</th></tr>
 <tr><td>1</td><td>How much is an iced Spanish latte?</td><td>"An Iced Spanish Latte (Regular 16 oz) is ₱170…"</td><td class="verdict-good">Correct</td></tr>
 <tr><td>2</td><td>I have celiac disease. Is the flourless chocolate cake safe for me?</td><td>"Everything is prepared in a shared kitchen, so we cannot guarantee… Please speak to the staff…"</td><td class="verdict-good">Correct refusal</td></tr>
-<tr><td>3</td><td>(same question, earlier the same day)</td><td>"The provider declined this request for exceeding a rate or spending limit."</td><td class="verdict-gap">Failure: Gemini free-tier daily quota (20 requests/day) used up</td></tr>
+<tr><td>3</td><td>(same question, earlier the same day)</td><td>"The provider declined this request for exceeding a rate or spending limit."</td><td class="verdict-gap">Failure: Gemini free-tier daily quota (20 requests/day on <code>gemini-3.5-flash</code>) used up</td></tr>
 </table>
 <div class="pair">
+<figure><img src="evidence/E-01-kape-chat-spanish-latte.png" alt="Correct price answer"><figcaption>Test 1: ₱170, matching <code>content/menu.md</code>.</figcaption></figure>
 <figure><img src="evidence/E-03-test2-celiac-refusal.png" alt="Correct refusal"><figcaption>Test 2: safe refusal (gemini-3.5-flash-lite).</figcaption></figure>
-<figure><img src="evidence/E-03-test3-FAILURE-gemini-daily-quota-429.png" alt="Rate limit error"><figcaption>Test 3: real failure. The model provider refused because the free daily quota was used up.</figcaption></figure>
 </div>
+<figure><img src="evidence/E-03-test3-FAILURE-gemini-daily-quota-429.png" alt="Rate limit error"><figcaption>Test 3: a real failure on 2026-11-06. The model provider refused because the free daily quota was used up during testing. What I changed: switched to <code>gemini-3.5-flash-lite</code> (a higher free limit) and turned off LibreChat's automatic chat titles, which halved the model calls per question. The gateway now shows customers "The assistant is busy… try again in a minute" instead, and the <code>kape-answers-failing</code> alarm would email me.</figcaption></figure>
 
 <h2>Quality measurement</h2>
-<p><code>eval/run-eval.mjs</code> on the 10 starter questions: <strong>10/10 correct</strong> (2026-11-06 13:10 UTC, gemini-3.5-flash-lite). Raw results: <a href="evidence/E-04-eval-2026-11-06-flash-lite.json">E-04 JSON</a>.</p>
+<p><code>eval/run-eval.mjs</code> sends each of the 10 labelled questions through the gateway and the real model and marks it correct only if the answer contains an expected phrase and none of the forbidden ones (for example "safe for you" on the allergy question). Model errors are counted separately so a quota problem is not mistaken for a wrong answer.</p>
+<ul>
+<li>2026-11-06 13:10 UTC, local: <strong>10/10 correct</strong>, average answer time 1.5 s (1.4–2.3 s). Raw results: <a href="evidence/E-04-eval-2026-11-06-flash-lite.json">E-04 JSON</a>.</li>
+<li>2026-11-07 05:46 UTC, on AWS: <strong>10/10 correct</strong>, 0 errors (E-14, the first quality-check email).</li>
+<li>Every night since, by the automatic quality check (metric <code>EvalPassRate</code>).</li>
+</ul>
 
 <h2>Before and after</h2>
 <table>
-<tr><th>Measure</th><th>Before (dates)</th><th>After (dates)</th></tr>
-<tr><td>Availability</td><td></td><td></td></tr>
-<tr><td>Response time (average)</td><td></td><td></td></tr>
-<tr><td>Failed answers</td><td></td><td></td></tr>
-<tr><td>Test pass rate</td><td></td><td></td></tr>
-<tr><td>Cost per day</td><td></td><td></td></tr>
+<tr><th>Measure</th><th>How measured</th><th>Before</th><th>After</th></tr>
+<tr><td>Correct answers to the 10 café questions</td><td><code>run-eval.mjs</code>, same 10 questions, same model</td><td class="todo">run the same script against the model with no café documents (stock behaviour); see below</td><td><strong>10/10</strong> (2026-11-06 local; 2026-11-07 AWS)</td></tr>
+<tr><td>Answer time</td><td>Average of the same 10 questions, same script</td><td class="todo">from the same "before" run</td><td><strong>1.5 s</strong> average (2026-11-06)</td></tr>
+<tr><td>Time to restore the database</td><td>Restore test, same backup</td><td>Impossible: no backups (2026-11-06)</td><td><strong>13 s</strong>, all counts verified (2026-11-07 14:23 UTC)</td></tr>
+<tr><td>Time to notice the site is down</td><td>Alarm design, tested by forcing alarm state</td><td>Not noticed until a customer complains: no monitoring</td><td>About <strong>3 minutes</strong> (site checked every minute, 3 misses), email confirmed working (2026-11-07 04:21 UTC)</td></tr>
+<tr><td>Security problems from the baseline</td><td>The baseline checklist</td><td><strong>8</strong> open (2026-11-06)</td><td><strong>0</strong> open (2026-11-07)</td></tr>
+<tr><td>Availability (share of minutes the site answered)</td><td>Average of <code>SiteUp</code>, checked every minute</td><td>Not measurable: no monitoring</td><td class="todo">CloudWatch → <code>SiteUp</code>, Average, period 1 day, for two whole days (for example 2026-11-08 to 2026-11-09)</td></tr>
+<tr><td>Failed answers</td><td><code>GatewayErrors</code> ÷ <code>GatewayRequests</code></td><td>Not measurable: no request logging</td><td class="todo">same two days as availability</td></tr>
+<tr><td>Cost per day</td><td>Cost Explorer, daily, tag <code>Project=SAM10</code></td><td>$0 (my laptop, not reachable by customers)</td><td class="todo">average of the same two days, from <code>E-16-cost-baseline-day0.png</code> and a later Cost Explorer screenshot</td></tr>
 </table>
+
+<p class="todo">The "before" quality run: start the gateway locally with an empty content folder, so the model gets no café documents, exactly as stock LibreChat would. For example: <code>mkdir empty</code>, set <code>CONTENT_DIR</code> to it in the gateway's environment, restart it, run <code>node eval/run-eval.mjs --json=docs/evidence/E-04-eval-before-no-content.json</code>, then restore the setting. Send me the JSON and I will add the numbers and a before/after bar chart here.</p>
+
+<h2>A graph</h2>
+<p class="todo">Screenshot the dashboard's "Answer time" and "Questions answered vs failed" widgets for the same two days as above (CloudWatch → Dashboards → <code>kape-lumen</code> → Custom range) as <code>E-16-results-graph.png</code> and embed it here, plus the before/after bar chart from the quality runs.</p>
 </main>
 <script src="assets/site.js"></script>
 </body>

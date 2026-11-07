@@ -10,45 +10,46 @@
 <body>
 <main>
 <h1>AWS infrastructure design</h1>
-<p class="todo">Replace this text diagram with a drawn one (draw.io is fine), saved as <code>evidence/E-18-infrastructure.png</code>, and keep it updated as things change.</p>
-<pre>
-Customer browser
-   │  HTTPS (Let's Encrypt certificate)
-   ▼
-Elastic IP ──► EC2 t3.small · Ubuntu 24.04 · encrypted 30 GB gp3 · ap-southeast-1
-                ├─ Caddy          reverse proxy, TLS, HTTP→HTTPS redirect
-                ├─ LibreChat      reskinned chat UI and user accounts
-                ├─ MongoDB        conversations and users (auth on, no public port)
-                └─ brew-gateway   our Node service
-                      ├─ reads café documents ◄── S3 bucket (versioned, private)
-                      ├─ reads Gemini API key ◄── SSM Parameter Store (SecureString)
-                      └─ sends the question ────► Google Gemini API (outside AWS)
+<p class="lead">Everything runs in one AWS account in one region (Singapore, the closest to the Philippines), on one server. That is deliberate: it is a small café assistant, and one well-run server is easier to secure, monitor and afford than a cluster.</p>
 
-All container logs ──► CloudWatch Logs (/kape/*, 14-day retention) ──► metric filters, alarms ──► SNS ──► email
-CloudWatch agent ──► memory, disk metrics          CloudTrail ──► who did what
-Nightly backup ──► S3 backups/ (kept 14 days)
-</pre>
+<figure class="diagram"><a href="assets/infrastructure.svg"><img src="assets/infrastructure.svg" alt="Diagram: the customer's browser reaches Caddy on an EC2 server over HTTPS; Caddy passes to LibreChat, which uses MongoDB and calls brew-gateway; brew-gateway reads café documents from S3 and the key from Parameter Store and calls Google Gemini outside AWS. Logs and metrics go to CloudWatch, whose alarms email the operator through SNS. GitHub Actions deploys through Systems Manager."></a>
+<figcaption>E-18 The infrastructure as deployed on 2026-11-07 (click to enlarge). Red: the path of one question. Every box is something I created and run; the dashed boxes are outside AWS.</figcaption></figure>
 
 <h2>How a question travels</h2>
 <ol>
-<li>The customer types a question in LibreChat over HTTPS. Caddy terminates TLS and forwards it to LibreChat.</li>
-<li>LibreChat sends the conversation to brew-gateway, its only "model", with a shared token.</li>
-<li>brew-gateway puts the café documents (loaded from S3) first as instructions, adds the Gemini key read from Parameter Store, and calls Gemini.</li>
-<li>The answer streams back the same way. brew-gateway writes one log line (question, time taken, success, versions) to CloudWatch.</li>
+<li><strong>Browser → Caddy.</strong> The customer types a question at <code>https://47-131-78-149.sslip.io</code>. The name points at the server's fixed (Elastic) IP address. Caddy holds the HTTPS certificate, decrypts the request and passes it on.</li>
+<li><strong>Caddy → LibreChat.</strong> LibreChat checks the user is signed in, saves the message in MongoDB, and sends the conversation to its only "model": brew-gateway.</li>
+<li><strong>LibreChat → brew-gateway.</strong> The gateway puts the five café documents (read from S3 and refreshed every 5 minutes) in front of the conversation as instructions, and adds the Gemini key (read from Parameter Store, never written to disk).</li>
+<li><strong>brew-gateway → Gemini.</strong> The request leaves AWS for Google's API. This is the only place data leaves the account: the café documents and the question, both free of personal data.</li>
+<li><strong>Answer back.</strong> The answer streams back through the gateway, LibreChat and Caddy to the browser. The gateway writes one log line: the question, how long it took, whether it worked, and which gateway, content and model version answered. That line goes to CloudWatch, where it is counted for the dashboard and alarms.</li>
 </ol>
 
 <h2>Every service and what it is for</h2>
 <table>
 <tr><th>Service</th><th>Used for</th><th>Why this one</th></tr>
-<tr><td>EC2 (t3.small)</td><td>Runs all four containers</td><td class="todo">your reasoning (measured memory use locally was about 550 MB)</td></tr>
-<tr><td>Elastic IP</td><td>Stable public address and HTTPS name</td><td class="todo"></td></tr>
-<tr><td>S3</td><td>Café documents; database backups</td><td class="todo"></td></tr>
-<tr><td>SSM Parameter Store</td><td>Gemini key and app secrets</td><td class="todo"></td></tr>
-<tr><td>CloudWatch</td><td>Logs, metrics, dashboard, alarms</td><td class="todo"></td></tr>
-<tr><td>SNS</td><td>Alarm emails</td><td class="todo"></td></tr>
-<tr><td>CloudTrail</td><td>Audit trail</td><td class="todo"></td></tr>
-<tr><td>IAM</td><td>Instance role, admin role with MFA</td><td class="todo"></td></tr>
+<tr><td>EC2 (t3.small)</td><td>Runs all four containers and the scheduled jobs</td><td>Measured memory use was about 550 MB locally; 2 GB leaves room for MongoDB and a restore test. Smaller (t3.micro, 1 GB) would swap; larger would be wasted money.</td></tr>
+<tr><td>EBS (30 GB gp3, encrypted)</td><td>The server's disk: database, uploads, local backups</td><td>Encrypted at rest at no extra cost; disk usage is alarmed at 80%.</td></tr>
+<tr><td>Elastic IP</td><td>A fixed public address, and through sslip.io a name for the HTTPS certificate</td><td>The address survives a stop and start; a free sslip.io name avoids buying a domain.</td></tr>
+<tr><td>Security group</td><td>The server's firewall</td><td>Only ports 80 and 443 are open. No SSH: admin access is through Session Manager.</td></tr>
+<tr><td>S3</td><td>Café documents (<code>content/</code>) and nightly database backups (<code>backups/</code>)</td><td>Cheap, durable and versioned: a deleted or overwritten document can be brought back, and staff could update content without touching the server.</td></tr>
+<tr><td>SSM Parameter Store</td><td>The Gemini key and the app's secrets (SecureString)</td><td>Encrypted, access-controlled and free; the app reads keys at runtime, so no key is in the code, the image or the repository.</td></tr>
+<tr><td>Systems Manager</td><td>Session Manager (admin shell) and Run Command (deploys)</td><td>Lets me and GitHub reach the server without opening SSH or holding SSH keys; access is controlled by IAM and recorded by CloudTrail.</td></tr>
+<tr><td>CloudWatch</td><td>Logs (14-day retention), metrics, dashboard, 10 alarms</td><td>Built in; container logs go there directly through Docker's awslogs driver, and the agent adds memory and disk.</td></tr>
+<tr><td>SNS</td><td>Alarm emails and the nightly quality-check email</td><td>One topic, one confirmed email subscription; every alarm uses it.</td></tr>
+<tr><td>CloudTrail</td><td>Record of every AWS API call</td><td>So I can see who changed what, and when; the first place to look after an unexpected change.</td></tr>
+<tr><td>IAM</td><td>The server's role, my admin role, the GitHub deploy role</td><td>Each has only the permissions it needs; admin needs MFA; GitHub signs in with short-lived OIDC tokens instead of stored keys.</td></tr>
+<tr><td>AWS Budgets</td><td>$10 monthly budget alert</td><td>Set up before anything else, so a mistake cannot run up a bill unnoticed.</td></tr>
 </table>
+
+<h2>Outside AWS</h2>
+<ul>
+<li><strong>Google Gemini API</strong> (<code>gemini-3.5-flash-lite</code>, free tier): the model. The course does not require an AWS AI service, and the free tier costs nothing at this scale.</li>
+<li><strong>GitHub</strong>: the code repository, GitHub Actions (tests and deploys) and GitHub Pages (this website).</li>
+<li><strong>sslip.io</strong>: free DNS that turns <code>47-131-78-149.sslip.io</code> into the address 47.131.78.149, so Let's Encrypt can issue a certificate.</li>
+</ul>
+
+<h2>What is deliberately not here</h2>
+<p>No load balancer, no second server, no managed database (RDS) and no Kubernetes. Each would add cost and moving parts, and the course limits the project to one region and a small footprint. The trade-off is that the single server is a single point of failure; the <a href="well-architected.html">Well-Architected review</a> names that as the gap I would close first.</p>
 </main>
 <script src="assets/site.js"></script>
 </body>

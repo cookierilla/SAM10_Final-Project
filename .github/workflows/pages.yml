@@ -30,7 +30,7 @@ jobs:
           mkdir -p _site
           cp -r site/. _site/
           mkdir -p _site/evidence
-          cp docs/evidence/*.png docs/evidence/*.json docs/evidence/*.jsonl _site/evidence/ 2>/dev/null || true
+          cp docs/evidence/*.png docs/evidence/*.json docs/evidence/*.jsonl docs/evidence/*.txt _site/evidence/ 2>/dev/null || true
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

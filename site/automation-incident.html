@@ -11,20 +11,93 @@
 <main>
 <h1>Automation, and the incident</h1>
 
-<h2>Automations</h2>
-<p class="todo">The two automations, what they do, and at least two unattended run timestamps each (E-14).</p>
+<h2 id="automation">Automations</h2>
+<p>All automation code is in the repository (<a href="https://github.com/cookierilla/SAM10_Final-Project/tree/main/infra/ops"><code>infra/ops/</code></a>, <a href="https://github.com/cookierilla/SAM10_Final-Project/blob/main/infra/cron/kape-lumen"><code>infra/cron/kape-lumen</code></a>, <a href="https://github.com/cookierilla/SAM10_Final-Project/blob/main/.github/workflows/deploy.yml"><code>.github/workflows/deploy.yml</code></a>), and the <a href="https://github.com/cookierilla/SAM10_Final-Project#how-to-deploy-the-automations">README explains how to deploy them</a>. The scheduled jobs are installed by the deploy script, so every deploy reinstalls the current version. Each job writes timestamped lines to <code>/var/log/kape-automation.log</code>, which is shipped to CloudWatch (<code>/kape/host</code>), publishes a metric, and emails me if it fails.</p>
 
-<h2>Incident</h2>
-<p class="todo">Pick the incident you write up. A real candidate already happened on 2026-11-06 (below); or create the disk-full fault in the automations phase.</p>
 <table>
-<tr><th>Started</th><td class="todo">time of the first failed question</td></tr>
-<tr><th>Noticed</th><td class="todo">when you saw the error</td></tr>
-<tr><th>Fixed</th><td class="todo">when the first answer worked</td></tr>
-<tr><th>Symptom</th><td>Every answer failed with "502 The AI model returned an error"; LibreChat retried for about 2 minutes.</td></tr>
-<tr><th>Root cause</th><td>Google retired <code>gemini-2.5-flash</code> for new API keys, so the gateway's default model returned 404 for every request.</td></tr>
+<tr><th>Job</th><th>When (Philippine time)</th><th>What it does</th><th>How you know it ran</th></tr>
+<tr><td><strong>1. Nightly backup</strong></td><td>02:00 every day</td><td>Database and uploads to S3 with counts and checksums (see <a href="operations.html#backup">Backup</a>)</td><td>Log line <code>[backup] backup … OK</code>, metric <code>BackupSuccess</code>, alarm <code>kape-backup-missing</code></td></tr>
+<tr><td><strong>2. Nightly quality check</strong></td><td>02:30 every day</td><td>Asks the 10 test questions through the real gateway and model, scores them, and emails "Kape Lumen nightly check: N% correct" with any question that failed</td><td>The email, log line <code>[eval] eval done: SCORE …</code>, metric <code>EvalPassRate</code> on the dashboard</td></tr>
+<tr><td>Restore test</td><td>03:30 Sundays</td><td>Restores the newest backup into a test database and checks every count</td><td>Log line <code>[restore] restore test … OK</code>, metric <code>RestoreTestSuccess</code></td></tr>
+<tr><td>Site check</td><td>every minute</td><td>Fetches <code>/health</code> over HTTPS</td><td>Metric <code>SiteUp</code>, alarm <code>kape-site-down</code></td></tr>
+<tr><td><strong>Auto-deploy</strong> (extra)</td><td>on every push to <code>main</code></td><td>Runs the gateway's tests; if they pass, syncs café content to S3, runs <code>deploy.sh</code> on the server through Systems Manager, and checks the site answers</td><td>GitHub Actions run history</td></tr>
 </table>
-<pre>upstream 404: "This model models/gemini-2.5-flash is no longer available to new users."</pre>
-<p class="todo">Prevention, and evidence that it worked; the runbook (Appendix D template).</p>
+
+<figure><img src="evidence/E-14-eval-email.png" alt="Nightly check email: 100% correct"><figcaption>E-14 The quality check's email, 2026-11-07 05:46 UTC (first run, started by hand to test it): "SCORE 10/10 correct (100%) · 0 wrong · 0 errors". The nightly runs send the same email with no one involved.</figcaption></figure>
+
+<h3>Unattended runs</h3>
+<p>These come from the automation log in CloudWatch (<code>/kape/host</code>), written by cron with nobody logged in.</p>
+<table class="timeline">
+<tr><th>Job</th><th>Run</th><th>Started (UTC)</th><th>Result</th></tr>
+<tr><td>Nightly backup</td><td>1</td><td class="todo">2026-11-07 18:00</td><td></td></tr>
+<tr><td>Nightly backup</td><td>2</td><td class="todo">2026-11-08 18:00</td><td></td></tr>
+<tr><td>Nightly quality check</td><td>1</td><td class="todo">2026-11-07 18:30</td><td></td></tr>
+<tr><td>Nightly quality check</td><td>2</td><td class="todo">2026-11-08 18:30</td><td></td></tr>
+<tr><td>Restore test</td><td>1</td><td class="todo">2026-11-07 19:30 (Sunday 03:30 PHT)</td><td></td></tr>
+</table>
+<p class="todo">Fill the table from CloudWatch → Logs Insights, log group <code>/kape/host</code>, query:
+<code>fields @timestamp, @message | filter @message like /\[(backup|eval|restore)\]/ and @message like /OK|eval done|FAILED/ | sort @timestamp asc</code>.
+Screenshot the result as <code>E-14-unattended-runs.png</code> and embed it here.</p>
+
+<figure><img src="evidence/E-14-github-deploy-run.png" alt="GitHub Actions deploy run, all green"><figcaption>E-14 Auto-deploy: run #7 of "Deploy to AWS", 2026-11-07, test and deploy both green. Runs #1–#6 failed while I set it up (missing repository variables, then an IAM trust policy that did not match the identity GitHub actually presents); each failure is kept in the history.</figcaption></figure>
+
+<h2 id="incident">Incident: the restore test was killed (exit 137)</h2>
+<p class="callout"><strong>Summary.</strong> The first restore test on AWS died after 8 seconds. It looked like the server running out of memory; it was actually MongoDB hitting Docker's default limit of 1024 open files, crashing, and taking the restore down with it. <strong>Time to detect: under 1 minute. Time to fix: 3 minutes</strong> to a working restore, and the root cause found and fixed the same day.</p>
+
+<h3>Timeline (2026-11-07, UTC; Philippine time is +8)</h3>
+<table class="timeline">
+<tr><th>Time</th><th>What happened</th></tr>
+<tr><td>04:14:53</td><td>First backup on AWS succeeds (14 221 bytes).</td></tr>
+<tr><td>04:17:08</td><td>Restore test started by hand. It restores a second copy of the database, 4 collections at a time (the default).</td></tr>
+<tr><td>04:17:16.000</td><td><strong>Fault starts.</strong> MongoDB log: <code>couldn't open [/proc/1/stat] Too many open files</code>.</td></tr>
+<tr><td>04:17:16.144</td><td>MongoDB's storage engine: <code>Too many open files</code> → <code>WT_PANIC … the process must exit and restart</code> → <code>Fatal assertion</code> → <code>Got signal: 6 (Aborted)</code>.</td></tr>
+<tr><td>04:17:16.84</td><td>Docker restarts the MongoDB container. The restore running inside it is killed: <strong>exit 137. Noticed</strong> immediately on screen.</td></tr>
+<tr><td>04:17:17–19</td><td>MongoDB starts again, recovers from its last checkpoint, and warns: open-file limit <code>1024</code>, recommended <code>64000</code>.</td></tr>
+<tr><td>04:18–04:19</td><td>First guess: out of memory (2 GB server, 224 MB of swap in use).</td></tr>
+<tr><td>04:19:19</td><td>Workaround committed: restore one collection at a time.</td></tr>
+<tr><td>04:20:10</td><td><strong>Restore test passes</strong> (14 s). Time to fix: 3 minutes.</td></tr>
+<tr><td>later that day</td><td>Kernel log and Docker checked: no out-of-memory kill. MongoDB's own log shows the real cause. Limit raised to 64000 and deployed; restore re-tested at 14:23:52 (13 s, OK).</td></tr>
+</table>
+
+<h3>Root cause</h3>
+<p><strong>MongoDB ran out of file handles, not memory.</strong> Its storage engine keeps one file per collection and one per index. LibreChat's database has 60 collections, many with 5–12 indexes, and the restore test builds a second complete copy of them, several at a time. That went past Docker's default limit of 1024 open files per container. When the storage engine cannot open a file it stops the database on purpose, Docker restarted it, and the restore running inside the same container died with it. Exit 137 means "killed": the restore was a victim, not the cause.</p>
+<p>The first guess (memory) was wrong, and the evidence says so: the kernel log shows no out-of-memory kill, and Docker reports <code>oomkilled=false</code>. Restoring one collection at a time made the test pass only because fewer files were open at once; with a bigger database the crash would return.</p>
+<p><strong>Customers were affected for about 3 seconds:</strong> the crashed MongoDB is also the live database. That was too short for the site check to fire, and no data was lost.</p>
+
+<div class="pair">
+<figure><img src="evidence/E-11-restore-test.png" alt="Restore failing with 137, then passing"><figcaption>E-11 The failure (<code>status 137</code>) and the passing restore three minutes later.</figcaption></figure>
+<figure><img src="evidence/E-15-oom-evidence.png" alt="Kernel log and docker inspect output"><figcaption>E-15 No out-of-memory messages in the kernel log for 04:16–04:19; MongoDB's container <code>restarts=1</code>, started 04:17:16.84, <code>oomkilled=false</code>.</figcaption></figure>
+</div>
+<p>MongoDB's own log at the moment of the crash, from CloudWatch <code>/kape/mongo</code> (<a href="evidence/E-15-mongo-too-many-open-files.txt">full excerpt</a>):</p>
+<pre>04:17:16.000 E ASSERT  couldn't open [/proc/1/stat] Too many open files
+04:17:16.144 E WT      error 24: __posix_directory_sync: /data/db/: Too many open files
+04:17:16.144 E WT      WT_PANIC: WiredTiger library panic: the process must exit and restart
+04:17:16.144 F ASSERT  Fatal assertion
+04:17:16.145 F CONTROL Got signal: 6 (Aborted)
+04:17:17.583 I CONTROL MongoDB starting
+04:17:17.585 W STORAGE Detected unclean shutdown - Lock file is not empty
+04:17:19.092 W CONTROL Soft rlimits for open file descriptors too low  currentValue: 1024, recommendedMinimum: 64000</pre>
+
+<h3>The fix, and evidence it worked</h3>
+<ol>
+<li><strong>Fix:</strong> the MongoDB container now gets an open-file limit of 64000, MongoDB's recommended minimum (<code>ulimits: nofile</code> in <code>infra/docker-compose.yml</code>, deployed automatically by GitHub Actions).</li>
+<li><strong>Kept as a margin:</strong> the restore still runs one collection at a time.</li>
+<li><strong>Prevention and detection:</strong> the restore test now runs every Sunday by itself, publishes <code>RestoreTestSuccess</code> and emails me if it fails, so a recurrence is caught within a week instead of on the day a real restore is needed. The runbook's Gotchas section says how to recognise it.</li>
+</ol>
+<div class="pair">
+<figure><img src="evidence/E-15-ulimit-fixed.png" alt="Open files limit 64000"><figcaption>E-15 After the deploy: <code>Max open files 64000 64000</code> inside the MongoDB container.</figcaption></figure>
+<figure><img src="evidence/E-15-restore-after-fix.png" alt="Restore passes after the fix"><figcaption>E-15 Restore test after the fix, 14:23:52 UTC: OK in 13 s, all counts match.</figcaption></figure>
+</div>
+<p class="todo">After Sunday: add the first unattended restore test (from the Unattended runs table) here as further evidence.</p>
+
+<h3>What I learned</h3>
+<ul>
+<li>Read the failing service's own log before guessing. Exit 137 on a small server pointed at memory; MongoDB's log said "Too many open files" in plain words.</li>
+<li>A workaround that turns the test green is not a root cause. I kept going after it passed.</li>
+<li>Default limits are not production settings, and startup warnings are worth reading: MongoDB had been warning about the 1024 limit since it first started.</li>
+<li>Editing a script directly on the server fixed the restore but blocked the next deploy. Fixes go through the repository; <code>deploy.sh</code> now says so when it happens.</li>
+</ul>
+<p>How to do a restore without asking anyone: the <a href="runbook.html">restore runbook</a>.</p>
 </main>
 <script src="assets/site.js"></script>
 </body>

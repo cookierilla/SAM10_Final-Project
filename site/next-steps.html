@@ -10,7 +10,14 @@
 <body>
 <main>
 <h1>What I would do next</h1>
-<p class="todo">Three to five realistic ideas in priority order, each with one line on why. Candidates: stop LibreChat retrying model errors that cannot succeed; a paid Gemini tier or a second provider as fallback; managed database backups; a second instance behind a load balancer.</p>
+<p class="lead">In priority order: each one fixes the biggest remaining risk for the least money and effort.</p>
+<ol>
+<li><strong>Daily EBS snapshots with Data Lifecycle Manager (kept 7 days).</strong> The whole system lives on one disk in one Availability Zone; snapshots turn a 30-minute manual rebuild into minutes, for cents a month. This is the gap named first in the <a href="well-architected.html">Well-Architected review</a>.</li>
+<li><strong>Stop LibreChat retrying errors that cannot succeed, and add a fallback model.</strong> When the free quota runs out, LibreChat retries for about two minutes and the customer waits for nothing. Failing fast with a clear message, and falling back to a second model or provider, would turn the most common real failure into a short delay.</li>
+<li><strong>Grow the test set to 30 harder questions, including tricky ones.</strong> Ten easy questions all pass, which says little. Thirty, with half-answered and misleading questions, would give an honest accuracy number and show where the documents need work.</li>
+<li><strong>Turn on GuardDuty and stop the server overnight.</strong> GuardDuty would flag a compromised instance or unusual API calls for a few cents a day; an EventBridge schedule stopping the instance from midnight to 07:00 would cut compute cost by nearly 30%.</li>
+<li><strong>Move the database to a managed service</strong> (Amazon DocumentDB, or MongoDB Atlas in the same region) if real customers ever used it, so backups, patching and failover are handled by the provider instead of my scripts.</li>
+</ol>
 </main>
 <script src="assets/site.js"></script>
 </body>

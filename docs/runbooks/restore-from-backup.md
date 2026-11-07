@@ -56,4 +56,4 @@ The live restore keeps the replaced upload folders as `/opt/kape/data/librechat/
 - All times in folder names are **UTC**. 02:00 PHT is 18:00 UTC the day before.
 
 ## 8. CHANGE HISTORY
-- 2026-11-07: first version. Tested on AWS: test restore OK in 14 s. Restore limited to one collection at a time after the 137 failure; the root cause (MongoDB's 1024 open-file limit) was fixed by raising it to 64000.
+- 2026-11-07: first version. Tested on AWS: test restore OK in 14 s. Restore limited to one collection at a time after the 137 failure; the root cause (MongoDB's 1024 open-file limit) was fixed by raising it to 64000, re-tested OK in 13 s.
