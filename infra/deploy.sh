@@ -8,7 +8,12 @@ echo "=== deploy started $(date -u +%FT%TZ) ==="
 
 APP_DIR=/opt/kape/app
 cd "$APP_DIR"
-git pull --ff-only
+if ! git pull --ff-only; then
+  echo "deploy: git pull failed. Usually a file was edited directly on the server." >&2
+  echo "        The repo is the source of truth: commit the fix on your PC and push, then run" >&2
+  echo "        sudo git -C $APP_DIR checkout -- . && sudo $APP_DIR/infra/deploy.sh" >&2
+  exit 1
+fi
 echo "commit: $(git rev-parse --short HEAD)"
 
 export PATH="$PATH:/snap/bin"   # the AWS CLI is a snap

@@ -5,7 +5,7 @@
     {
       "type": "text", "x": 0, "y": 0, "width": 12, "height": 4,
       "properties": {
-        "markdown": "# Kapé Lumen: operations\nPublic site: **https://SITE_ADDRESS** · instance `INSTANCE_ID` · region REGION\n\nTop row = what customers feel (up? answering? how fast?). Middle = the server. Bottom = backups and recent errors.\nRunbook: `docs/DEPLOY-AWS.md` · alerts go to SNS topic `kape-alerts`."
+        "markdown": "# Kap\u00e9 Lumen: operations\nPublic site: **https://SITE_ADDRESS** \u00b7 instance `INSTANCE_ID` \u00b7 region REGION\n\nTop row = what customers feel (up? answering? how fast?). Middle = the server. Bottom = backups and recent errors.\nRunbook: `docs/DEPLOY-AWS.md` \u00b7 alerts go to SNS topic `kape-alerts`."
       }
     },
     {
