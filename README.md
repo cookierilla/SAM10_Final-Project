@@ -58,6 +58,6 @@ No keys, passwords or tokens are stored in this repository. Locally they live in
 | AWS preparation | 2026-11-06 | Wrote the AWS deployment before creating the account: production compose file (Caddy HTTPS, Mongo auth, pinned LibreChat image), EC2 bootstrap, secrets in SSM, least-privilege IAM policies, CloudWatch agent config, deploy runbook, website skeleton + Pages workflow. | commits |
 | Account safety | 2026-11-06 | Root MFA, $10 budget alert, MFA-protected admin role, read-only IAM user with MFA, CLI through the role, CloudTrail. | E-12, E-16 |
 | Deployment | 2026-11-07 | S3 bucket (versioned), secrets in Parameter Store, log groups with 14-day retention, SNS alerts, least-privilege EC2 role, HTTP/HTTPS-only security group. Launched t3.small; fixed two first-boot issues found in review. Live over HTTPS. | E-02, E-08, E-09, E-10, E-12, E-13 |
-| Monitoring and backups | | | |
-| Automations and incident | | | |
-| Website and video | | | |
+| Monitoring and backups | 2026-11-07 | CloudWatch dashboard, 10 alarms emailing SNS (tested: alert received 04:21 UTC), metric filters and custom metrics, log groups with 14-day retention. Nightly backup of MongoDB and uploads to S3 with counts and checksums; restore script with test and live modes; first restore tested on AWS. | E-06, E-07, E-08, E-09, E-10, E-11 |
+| Automations and incident | 2026-11-07 | Nightly quality check (emails the pass rate), weekly restore test, GitHub Actions auto-deploy with OIDC (fixed missing variables and a trust-policy mismatch). Incident: restore killed with exit 137; root cause found in MongoDB's log (1024 open-file limit, not memory), fixed with a 64000 limit and re-tested. Restore runbook. Fixed log stream names. | E-14, E-15 |
+| Website and video | 2026-11-07 | All website pages written from the evidence, infrastructure diagram, Well-Architected review, before/after quality measurement (1/10 without café data vs 10/10). Video: to do. | E-04, E-12, E-18 |
