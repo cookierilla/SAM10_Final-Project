@@ -11,7 +11,10 @@ cd "$APP_DIR"
 git pull --ff-only
 echo "commit: $(git rev-parse --short HEAD)"
 
+export PATH="$PATH:/snap/bin"   # the AWS CLI is a snap
 install -d -m 755 /opt/kape/data/{mongo,caddy,librechat/images,librechat/uploads,librechat/logs} /opt/kape/backups
+# The LibreChat image runs as user "node" (uid 1000), so it must own the folders it writes to.
+chown -R 1000:1000 /opt/kape/data/librechat
 "$APP_DIR/infra/render-env.sh"
 
 cd "$APP_DIR/infra"

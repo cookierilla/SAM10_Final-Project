@@ -9,6 +9,7 @@ echo "=== bootstrap started $(date -u +%FT%TZ) ==="
 REPO_URL=https://github.com/cookierilla/SAM10_Final-Project.git
 APP_DIR=/opt/kape/app
 export DEBIAN_FRONTEND=noninteractive
+export PATH="$PATH:/snap/bin"   # user-data's PATH may not include snap, where the AWS CLI goes
 
 # 1. Packages: Docker + Compose from Ubuntu's own repositories, AWS CLI from the official snap.
 apt-get update -y

@@ -8,6 +8,8 @@ set -euo pipefail
 export MSYS_NO_PATHCONV=1   # Git Bash on Windows: stop it rewriting "/kape-lumen/..." into a Windows path
 BUCKET=${1:?usage: sync-content.sh <content-bucket-name>}
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# On Git Bash the AWS CLI is a Windows program and cannot read /c/... paths; give it C:/... instead.
+if command -v cygpath >/dev/null 2>&1; then ROOT="$(cygpath -m "$ROOT")"; fi
 
 aws s3 sync "$ROOT/content/" "s3://$BUCKET/content/" --delete --exclude '*' --include '*.md' \
   --content-type 'text/markdown; charset=utf-8' --region ap-southeast-1
