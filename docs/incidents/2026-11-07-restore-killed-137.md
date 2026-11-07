@@ -22,7 +22,13 @@ Until this was fixed we had backups, but no proof that we could restore them.
 **Time to fix:** 3 minutes from failure to a passing restore.
 
 ## Root cause
-_To complete from the evidence below. Do not claim more than it shows._
+_Still being confirmed. Do not claim more than the evidence shows._
+
+**Evidence so far (collected 2026-11-07):**
+- `journalctl -k` for 04:16–04:19 shows **no** OOM-killer messages: the kernel did not kill anything for lack of memory.
+- `docker inspect chat-mongodb`: `restarts=1 started=2026-11-07T04:17:16.84Z oomkilled=false`. MongoDB's container **restarted at the exact second the restore failed**.
+
+So it was not `mongorestore` that ran out of memory. **`mongod` itself exited**, Docker restarted it (`restart: always`), and that killed the `mongorestore` running inside the container, hence 137. Why mongod exited is in its own log (CloudWatch `/kape/mongo`, just before 04:17:16).
 
 Working hypothesis: the instance has 2 GB of RAM, already about half used by LibreChat (Node), MongoDB and the gateway. By default `mongorestore` restores **4 collections in parallel**, and this database has about 60 collections, each with indexes to rebuild. That parallel load pushed memory over the limit, so the Linux **out-of-memory (OOM) killer** ended a process. Either `mongorestore` itself was killed, or `mongod` was, which takes down the restore running inside its container.
 
