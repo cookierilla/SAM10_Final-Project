@@ -1,4 +1,4 @@
-# Week 2: Deploy Kapé Lumen to AWS (runbook)
+# Deploy Kapé Lumen to AWS (runbook)
 
 **Owner:** you · **Region:** `ap-southeast-1` (Singapore) for everything · **Takes:** about 2 hours the first time
 **Last tested:** _not yet; fill in the date when you've run it end to end_
@@ -28,7 +28,7 @@ Console → top-right account name → **Security credentials** → **Assign MFA
 ### A2. Budget alert (do this before anything that costs money)
 Console → **Billing and Cost Management → Budgets → Create budget** → *Use a template* → **Monthly cost budget**. Set **$10**, enter your email → Create.
 Add a second one at **$25**, or set alert thresholds of 50%/80%/100% on the first.
-Also: **Billing preferences → Alert preferences → Receive CloudWatch billing alerts** (needed for the billing alarm in week 3).
+Also: **Billing preferences → Alert preferences → Receive CloudWatch billing alerts** (needed for the billing alarm in the monitoring phase).
 
 ### A3. Admin role + your own IAM user
 In **IAM**:
@@ -232,7 +232,7 @@ The brief's **baseline** is "the environment before you touched it". For us, tha
 | Logs | Container files, no retention | CloudWatch, 14-day retention |
 | Extras running | RAG API, vector DB, search, admin panel | Only what we use (4 containers) |
 
-From today, also note **daily cost** (Billing → Cost Explorer, daily, filter tag `Project=SAM10`) and the response time and error rate (week 3 dashboard). Equal-length before/after periods matter more than long ones.
+From today, also note **daily cost** (Billing → Cost Explorer, daily, filter tag `Project=SAM10`) and the response time and error rate (from the monitoring dashboard). Equal-length before/after periods matter more than long ones.
 
 ---
 

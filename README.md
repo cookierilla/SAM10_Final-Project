@@ -34,16 +34,18 @@ See [docs/DEPLOY-AWS.md](docs/DEPLOY-AWS.md): account safety, CLI setup, S3 + Pa
 Edit `site/*.html` and push: GitHub Actions publishes it (one-time: repo **Settings → Pages → Source: GitHub Actions**). Preview locally with `python -m http.server 8765 --directory site` after copying `docs/evidence/*.png` into `site/evidence/`.
 
 ## How to deploy the automations
-_TODO (week 4)._
+_TODO (automations phase)._
 
 ## Secrets
 No keys, passwords or tokens are stored in this repository. Locally they live in a gitignored `.env`. On AWS they live in SSM Parameter Store (SecureString) and are read at runtime. Run `gitleaks detect` before every push.
 
 ## Contribution log (solo)
-| Week | Dates | What I did | Evidence |
+| Phase | Date | What I did | Evidence |
 |---|---|---|---|
-| 1 | 2026-11-06 – | Read the brief, chose domain (café) and model (Gemini free tier). Created the repo, wrote invented café content and 10 test questions. Built brew-gateway (S3/SSM-ready proxy with request logging and 6 tests), the LibreChat reskin config, and the local install script. | commits, `npm test` output |
-| 2 | 2026-11-06 – | Prepared the AWS deployment before creating the account: production compose file (Caddy HTTPS, Mongo auth, pinned LibreChat image), EC2 bootstrap, secrets in SSM, least-privilege IAM policies, CloudWatch agent config, deploy runbook, website skeleton + Pages workflow. | commits |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
+| Local build and reskin | 2026-11-06 | Read the brief, chose domain (café) and model (Gemini free tier). Created the repo, wrote invented café content and 10 test questions. Built brew-gateway (S3/SSM-ready proxy with request logging and tests), the LibreChat reskin config, and the local install script. Eval: 10/10. | E-01, E-03, E-04, E-05 |
+| AWS preparation | 2026-11-06 | Wrote the AWS deployment before creating the account: production compose file (Caddy HTTPS, Mongo auth, pinned LibreChat image), EC2 bootstrap, secrets in SSM, least-privilege IAM policies, CloudWatch agent config, deploy runbook, website skeleton + Pages workflow. | commits |
+| Account safety | 2026-11-06 | Root MFA, $10 budget alert, MFA-protected admin role, read-only IAM user with MFA, CLI through the role, CloudTrail. | E-12, E-16 |
+| Deployment | 2026-11-07 | S3 bucket (versioned), secrets in Parameter Store, log groups with 14-day retention, SNS alerts, least-privilege EC2 role, HTTP/HTTPS-only security group. Launched t3.small; fixed two first-boot issues found in review. Live over HTTPS. | E-02, E-08, E-09, E-10, E-12, E-13 |
+| Monitoring and backups | | | |
+| Automations and incident | | | |
+| Website and video | | | |

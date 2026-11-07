@@ -1,6 +1,6 @@
-# Week 1: Run Kapé Lumen locally (Windows 10)
+# Run Kapé Lumen locally (Windows 10)
 
-Goal for the end of week 1: LibreChat running on this PC with the Kapé Lumen reskin, answering from `content/` through brew-gateway. You also need screenshots of the **original** LibreChat UI (evidence E-05).
+Goal: LibreChat running on this PC with the Kapé Lumen reskin, answering from `content/` through brew-gateway. You also need screenshots of the **original** LibreChat UI (evidence E-05).
 
 ## 1. Install WSL2 and Docker Desktop (you do this; it needs admin rights and a reboot)
 1. Open **PowerShell as Administrator** and run:
@@ -86,4 +86,4 @@ cd gateway && npm install && npm test
 ```
 
 ## Day-1 AWS reminder
-When you create your AWS account (start of week 2 at the latest), do these first, in this order: **root MFA → AWS Budgets alert (e.g. $10) → your own IAM user with MFA**. The brief caps you at a pass if costs run away with no budget alert set.
+When you create your AWS account (before deploying anything), do these first, in this order: **root MFA → AWS Budgets alert (e.g. $10) → your own IAM user with MFA**. The brief caps you at a pass if costs run away with no budget alert set.
