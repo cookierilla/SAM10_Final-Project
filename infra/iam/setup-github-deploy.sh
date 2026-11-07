@@ -3,6 +3,9 @@
 # GitHub proves who it is with a short-lived OpenID Connect (OIDC) token; AWS lets ONLY
 # pushes to main of cookierilla/SAM10_Final-Project assume the KapeGithubDeploy role,
 # which can do two things: run deploy.sh on our one instance, and update café content in S3.
+# GitHub's token names the repo with its owner and repo IDs (owner@125032983/repo@1447898669),
+# so a deleted-and-recreated repo with the same name cannot reuse this role. The deploy
+# workflow's "Show the identity GitHub presents to AWS" step prints the exact value to trust.
 #
 # Run from your PC (Git Bash, AWS_PROFILE=kape):   ./infra/iam/setup-github-deploy.sh
 set -euo pipefail

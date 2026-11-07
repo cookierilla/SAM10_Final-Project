@@ -9,7 +9,7 @@
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:cookierilla/SAM10_Final-Project:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:cookierilla@125032983/SAM10_Final-Project@1447898669:ref:refs/heads/main"
         }
       }
     }
