@@ -36,8 +36,8 @@ jobs:
       run:
         working-directory: gateway
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: npm ci --no-audit --no-fund
@@ -48,10 +48,37 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Check the repository variables are set
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          INSTANCE_ID: ${{ vars.INSTANCE_ID }}
+          CONTENT_BUCKET: ${{ vars.CONTENT_BUCKET }}
+          SITE_ADDRESS: ${{ vars.SITE_ADDRESS }}
+        run: |
+          missing=0
+          for v in AWS_DEPLOY_ROLE_ARN INSTANCE_ID CONTENT_BUCKET SITE_ADDRESS; do
+            if [ -z "${!v}" ]; then echo "::error::repository variable $v is not set (Settings > Secrets and variables > Actions > Variables, one variable per name)"; missing=1; fi
+          done
+          exit $missing
+
+      # Prints only the token's claims (never the token itself), so a trust-policy
+      # mismatch ("Not authorized to perform sts:AssumeRoleWithWebIdentity") is easy to see.
+      - name: Show the identity GitHub presents to AWS
+        run: |
+          tok=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                  "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
+          python3 - "$tok" <<'PY'
+          import base64, json, sys
+          p = sys.argv[1].split(".")[1]; p += "=" * (-len(p) % 4)
+          c = json.loads(base64.urlsafe_b64decode(p))
+          for k in ("sub", "aud", "iss", "repository", "ref", "event_name"):
+              print(f"{k:11} {c.get(k)}")
+          PY
 
       - name: Sign in to AWS (OIDC, role KapeGithubDeploy)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
