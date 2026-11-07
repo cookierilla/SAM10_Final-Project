@@ -75,7 +75,7 @@ if [ "$MODE" = live ]; then
   log "stopping $APP_CONTAINER (the site shows an error until it is back)"
   docker stop "$APP_CONTAINER" >/dev/null
   docker exec -i "$MONGO_CONTAINER" sh -c \
-    'exec mongorestore --quiet --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --archive --gzip --drop --nsInclude "LibreChat.*"' \
+    'exec mongorestore --quiet --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --archive --gzip --numParallelCollections=1 --numInsertionWorkersPerCollection=1 --drop --nsInclude "LibreChat.*"' \
     < "$SRC/mongo-LibreChat.archive.gz"
   # Keep the current files beside the restored ones, in case they are needed.
   for d in images uploads; do
@@ -86,7 +86,7 @@ if [ "$MODE" = live ]; then
 else
   mongo_eval "db.getSiblingDB('$TARGET_DB').dropDatabase()" >/dev/null
   docker exec -i "$MONGO_CONTAINER" sh -c \
-    'exec mongorestore --quiet --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --archive --gzip --nsInclude "LibreChat.*" --nsFrom "LibreChat.*" --nsTo "LibreChat_restoretest.*"' \
+    'exec mongorestore --quiet --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --archive --gzip --numParallelCollections=1 --numInsertionWorkersPerCollection=1 --nsInclude "LibreChat.*" --nsFrom "LibreChat.*" --nsTo "LibreChat_restoretest.*"' \
     < "$SRC/mongo-LibreChat.archive.gz"
 fi
 
