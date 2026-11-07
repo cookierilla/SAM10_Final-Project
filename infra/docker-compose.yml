@@ -67,6 +67,14 @@ services:
     image: mongo:8.0.20
     container_name: chat-mongodb
     restart: always
+    # WiredTiger keeps one file per collection and per index. With Docker's default limit of
+    # 1024 open files, a restore test (a second copy of ~60 collections + their indexes) made
+    # mongod panic with "Too many open files" and abort (incident 2026-11-07). MongoDB
+    # recommends at least 64000.
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
     environment:
       # Auth ON (LibreChat's default compose runs --noauth). Password comes from SSM via .env.
       MONGO_INITDB_ROOT_USERNAME: kape

@@ -49,11 +49,11 @@ sudo /opt/kape/app/infra/ops/restore.sh --live --yes 20261107T041453Z
 The live restore keeps the replaced upload folders as `/opt/kape/data/librechat/{images,uploads}.before-restore-<time>`. To go back, move them back and restore a different (newer) backup with Step 3. The database you replaced is **not** kept, so if it might still be needed, run `sudo /opt/kape/app/infra/ops/backup.sh` **before** Step 3.
 
 ## 7. GOTCHAS
-- **"FAILED (test): line … exited with status 137".** The restore was killed by the kernel for using too much memory (2 GB instance; see the incident write-up of 2026-11-07). `restore.sh` restores one collection at a time to prevent this. If it comes back, run `free -m` and `docker stats --no-stream`, and stop the restore test from running at the same time as other heavy jobs.
+- **"FAILED (test): line … exited with status 137".** MongoDB crashed and restarted during the restore, killing `mongorestore` with it. On 2026-11-07 the cause was **"Too many open files"** (see the incident write-up). Check MongoDB's log: CloudWatch `/kape/mongo`, or `sudo docker logs --since 10m chat-mongodb 2>&1 | grep -E '"s":"(E|F)"'`. Check the open-file limit is 64000: `sudo docker exec chat-mongodb sh -c 'grep "open files" /proc/1/limits'`. If it shows 1024, redeploy (`infra/deploy.sh`), which applies the limit from `docker-compose.yml`.
 - **"checksum mismatch: backup is damaged".** Don't use that backup. Pick the previous night's.
 - **Never edit scripts on the server.** `deploy.sh` will then refuse to update (`git pull` fails). Fix the script in the repo and push. If the server already has a local edit: `sudo git -C /opt/kape/app checkout -- .`
 - The bucket keeps backups for **14 days** (lifecycle rule). Older ones are gone.
 - All times in folder names are **UTC**. 02:00 PHT is 18:00 UTC the day before.
 
 ## 8. CHANGE HISTORY
-- 2026-11-07: first version. Tested on AWS: test restore OK in 14 s. Restore limited to one collection at a time after the 137 failure.
+- 2026-11-07: first version. Tested on AWS: test restore OK in 14 s. Restore limited to one collection at a time after the 137 failure; the root cause (MongoDB's 1024 open-file limit) was fixed by raising it to 64000.
