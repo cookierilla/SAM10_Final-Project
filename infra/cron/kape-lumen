@@ -1,0 +1,14 @@
+# Kapé Lumen scheduled jobs. Installed to /etc/cron.d/kape-lumen by infra/deploy.sh.
+# Times are UTC (Philippine time = UTC+8). Output goes to /var/log/kape-automation.log,
+# which the CloudWatch agent ships to /kape/host.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+
+# Every minute: is the site up? (metric KapeLumen/SiteUp, alarm kape-site-down)
+* * * * * root /opt/kape/app/infra/ops/probe.sh >/dev/null 2>&1
+
+# 02:00 PHT nightly: database + uploads to S3 (metric BackupSuccess, alarm kape-backup-missing)
+0 18 * * * root /opt/kape/app/infra/ops/backup.sh >/dev/null 2>&1
+
+# 03:30 PHT Sundays: restore the latest backup into a test database and check it (metric RestoreTestSuccess)
+30 19 * * 6 root /opt/kape/app/infra/ops/restore.sh --test latest >/dev/null 2>&1

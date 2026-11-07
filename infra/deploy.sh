@@ -17,6 +17,11 @@ install -d -m 755 /opt/kape/data/{mongo,caddy,librechat/images,librechat/uploads
 chown -R 1000:1000 /opt/kape/data/librechat
 "$APP_DIR/infra/render-env.sh"
 
+# Scheduled jobs (site probe, nightly backup, weekly restore test)
+chmod +x "$APP_DIR"/infra/*.sh "$APP_DIR"/infra/ops/*.sh
+install -m 644 -o root -g root "$APP_DIR/infra/cron/kape-lumen" /etc/cron.d/kape-lumen
+touch /var/log/kape-automation.log
+
 cd "$APP_DIR/infra"
 docker compose --env-file /opt/kape/.env up -d --build --remove-orphans
 docker compose --env-file /opt/kape/.env ps

@@ -236,6 +236,73 @@ From today, also note **daily cost** (Billing → Cost Explorer, daily, filter t
 
 ---
 
+## Part G — Monitoring, backups and restore
+
+### G1. Put the new scripts on the server
+The backup, restore and site-check scripts live in `infra/ops/`. Cron runs them on the server from `infra/cron/kape-lumen`. Push your commits first, then redeploy:
+```bash
+aws ssm send-command --instance-ids $INSTANCE_ID --document-name AWS-RunShellScript --parameters 'commands=["/opt/kape/app/infra/deploy.sh"]' --query Command.CommandId --output text
+```
+Or use the console: EC2 → instance → **Connect → Session Manager** → `sudo /opt/kape/app/infra/deploy.sh`. The deploy also installs the cron jobs.
+
+| When (PHT) | Job | Result metric | Alarm |
+|---|---|---|---|
+| every minute | `probe.sh`: fetch `https://<site>/health` from outside | `SiteUp` | `kape-site-down` |
+| 02:00 nightly | `backup.sh`: database + uploads to `s3://…/backups/<time>/` | `BackupSuccess`, `BackupSizeBytes` | `kape-backup-missing` (and an email straight away on failure) |
+| 03:30 Sundays | `restore.sh --test latest`: restore into a test database and check it | `RestoreTestSuccess` | email on failure |
+
+### G2. Alarms and dashboard (from your PC)
+```bash
+./infra/monitoring/setup-monitoring.sh
+```
+This creates the log-based metrics, **10 alarms** (all email `kape-alerts` when they fire and again when they clear) and the `kape-lumen` dashboard. It ends with a table of alarm states. `INSUFFICIENT_DATA` is normal for the first few minutes, and `kape-backup-missing` shows `ALARM` until the first backup runs (G3).
+
+| Alarm | Fires when | Automatic action |
+|---|---|---|
+| kape-site-down | 3 failed checks in a row, **or no checks at all** (instance dead) | email |
+| kape-ec2-hardware-check | AWS host problem | email + **auto-recover** to new hardware |
+| kape-ec2-os-check | OS stopped responding | email + **auto-reboot** |
+| kape-cpu-high | CPU > 80% for 15 min | email |
+| kape-memory-high | memory > 85% for 10 min | email |
+| kape-disk-high | disk > 80% | email |
+| kape-answers-failing | ≥ 3 failed questions in 5 min | email |
+| kape-answers-slow | slowest 10% of answers > 10 s | email |
+| kape-http-5xx | ≥ 5 server errors in 5 min | email |
+| kape-backup-missing | no successful backup in 24 h | email |
+
+### G3. First backup and restore test (on the server)
+In Session Manager:
+```bash
+sudo /opt/kape/app/infra/ops/backup.sh
+```
+✅ It ends with `backup … OK`. The files appear in S3 under `backups/<time>/`: the database archive, the uploads archive, `manifest.json` and `SHA256SUMS`.
+```bash
+sudo /opt/kape/app/infra/ops/restore.sh --test latest
+```
+✅ It downloads the backup **from S3**, checks the checksums and restores into `LibreChat_restoretest`. Then it prints `expected counts` and `restored counts`, which must be identical, and deletes the test database. The live site is untouched.
+
+**Real disaster** (database lost or corrupted): `sudo /opt/kape/app/infra/ops/restore.sh --live --yes latest`. This stops LibreChat, replaces the database and uploads (the old folders are kept as `*.before-restore-<time>`), checks the counts and starts LibreChat again. The local test took 5 seconds. Measure the real restore time on AWS: that is your RTO. Your RPO is up to 24 hours (one backup per night).
+
+### G4. Prove the alarms email you
+Trigger one on purpose, safely:
+```bash
+aws cloudwatch set-alarm-state --alarm-name kape-answers-failing --state-value ALARM --state-reason "Test: proving the alert email works"
+```
+✅ An email arrives within a minute. The alarm returns to OK at its next check (up to 5 minutes), which sends a second "OK" email.
+
+### When an alarm fires
+| Alarm | First thing to check |
+|---|---|
+| site-down | `curl -sI https://<site>`; EC2 instance state; `docker compose ps` in Session Manager |
+| answers-failing | the dashboard's "Latest failed questions" widget: a 429 is Gemini quota, 401/403 is the key, 404 is the model name |
+| memory / cpu | `docker stats --no-stream`; restart the heaviest container |
+| disk-high | `df -h`, `docker system df`, `du -sh /opt/kape/backups` |
+| backup-missing | `/kape/host` log stream `*/automation`; run `backup.sh` by hand |
+
+> Stopping the instance overnight (below) makes `kape-site-down` fire and skips that night's backup. Expect those emails, or don't stop it.
+
+---
+
 ## Everyday operations
 | Task | Command |
 |---|---|
@@ -253,3 +320,4 @@ From today, also note **daily cost** (Billing → Cost Explorer, daily, filter t
 
 ## Change history
 - 2026-11-06: first version, written before the first deployment.
+- 2026-11-07: first deployment. Fixed the snap PATH and LibreChat folder ownership. Added Part G (monitoring, backups, restore).

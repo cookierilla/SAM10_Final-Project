@@ -1,0 +1,123 @@
+{
+  "start": "-PT12H",
+  "periodOverride": "inherit",
+  "widgets": [
+    {
+      "type": "text", "x": 0, "y": 0, "width": 12, "height": 4,
+      "properties": {
+        "markdown": "# Kapé Lumen: operations\nPublic site: **https://SITE_ADDRESS** · instance `INSTANCE_ID` · region REGION\n\nTop row = what customers feel (up? answering? how fast?). Middle = the server. Bottom = backups and recent errors.\nRunbook: `docs/DEPLOY-AWS.md` · alerts go to SNS topic `kape-alerts`."
+      }
+    },
+    {
+      "type": "alarm", "x": 12, "y": 0, "width": 12, "height": 4,
+      "properties": {
+        "title": "Alarms (10)",
+        "alarms": ["ALARM_ARNS"]
+      }
+    },
+
+    {
+      "type": "metric", "x": 0, "y": 4, "width": 6, "height": 6,
+      "properties": {
+        "title": "Site up (1 = yes), checked every minute",
+        "region": "REGION", "view": "timeSeries", "stat": "Minimum", "period": 60,
+        "metrics": [["KapeLumen", "SiteUp", {"label": "SiteUp"}]],
+        "yAxis": {"left": {"min": 0, "max": 1}}
+      }
+    },
+    {
+      "type": "metric", "x": 6, "y": 4, "width": 6, "height": 6,
+      "properties": {
+        "title": "Questions answered vs failed (per 5 min)",
+        "region": "REGION", "view": "timeSeries", "stat": "Sum", "period": 300,
+        "metrics": [
+          ["KapeLumen", "GatewayRequests", {"label": "questions", "color": "#2ca02c"}],
+          ["KapeLumen", "GatewayErrors", {"label": "failed", "color": "#d62728"}],
+          ["KapeLumen", "GatewayEmptyAnswers", {"label": "empty answer", "color": "#ff7f0e"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 12, "y": 4, "width": 6, "height": 6,
+      "properties": {
+        "title": "Answer time (ms): median and slowest 10%",
+        "region": "REGION", "view": "timeSeries", "period": 300,
+        "metrics": [
+          ["KapeLumen", "GatewayLatencyMs", {"stat": "p50", "label": "p50"}],
+          ["KapeLumen", "GatewayLatencyMs", {"stat": "p90", "label": "p90"}]
+        ],
+        "annotations": {"horizontal": [{"label": "alarm: p90 > 10 s", "value": 10000}]}
+      }
+    },
+    {
+      "type": "metric", "x": 18, "y": 4, "width": 6, "height": 6,
+      "properties": {
+        "title": "Web requests and server errors (5xx)",
+        "region": "REGION", "view": "timeSeries", "stat": "Sum", "period": 300,
+        "metrics": [
+          ["KapeLumen", "HttpRequests", {"label": "requests"}],
+          ["KapeLumen", "Http5xx", {"label": "5xx", "color": "#d62728", "yAxis": "right"}]
+        ]
+      }
+    },
+
+    {
+      "type": "metric", "x": 0, "y": 10, "width": 8, "height": 6,
+      "properties": {
+        "title": "CPU % and burst credits (t3.small)",
+        "region": "REGION", "view": "timeSeries", "stat": "Average", "period": 300,
+        "metrics": [
+          ["AWS/EC2", "CPUUtilization", "InstanceId", "INSTANCE_ID", {"label": "CPU %"}],
+          ["AWS/EC2", "CPUCreditBalance", "InstanceId", "INSTANCE_ID", {"label": "credits", "yAxis": "right"}]
+        ],
+        "annotations": {"horizontal": [{"label": "alarm", "value": 80}]}
+      }
+    },
+    {
+      "type": "metric", "x": 8, "y": 10, "width": 8, "height": 6,
+      "properties": {
+        "title": "Memory, swap and disk used (%)",
+        "region": "REGION", "view": "timeSeries", "period": 300,
+        "metrics": [
+          [{"expression": "SEARCH('{CWAgent,InstanceId} mem_used_percent', 'Average', 300)", "id": "mem", "label": "memory"}],
+          [{"expression": "SEARCH('{CWAgent,InstanceId} swap_used_percent', 'Average', 300)", "id": "swap", "label": "swap"}],
+          [{"expression": "SEARCH('{CWAgent,InstanceId,fstype,path} disk_used_percent', 'Average', 300)", "id": "disk", "label": "disk /"}]
+        ],
+        "yAxis": {"left": {"min": 0, "max": 100}},
+        "annotations": {"horizontal": [{"label": "memory alarm", "value": 85}, {"label": "disk alarm", "value": 80}]}
+      }
+    },
+    {
+      "type": "metric", "x": 16, "y": 10, "width": 8, "height": 6,
+      "properties": {
+        "title": "EC2 health checks (0 = OK)",
+        "region": "REGION", "view": "timeSeries", "stat": "Maximum", "period": 60,
+        "metrics": [
+          ["AWS/EC2", "StatusCheckFailed_System", "InstanceId", "INSTANCE_ID", {"label": "AWS hardware"}],
+          ["AWS/EC2", "StatusCheckFailed_Instance", "InstanceId", "INSTANCE_ID", {"label": "our OS"}]
+        ]
+      }
+    },
+
+    {
+      "type": "metric", "x": 0, "y": 16, "width": 8, "height": 6,
+      "properties": {
+        "title": "Backups (1 = OK) and backup size",
+        "region": "REGION", "view": "singleValue", "period": 86400, "stat": "Maximum",
+        "metrics": [
+          ["KapeLumen", "BackupSuccess", {"label": "last nightly backup"}],
+          ["KapeLumen", "RestoreTestSuccess", {"label": "last restore test", "period": 604800}],
+          ["KapeLumen", "BackupSizeBytes", {"label": "backup size (bytes)"}]
+        ]
+      }
+    },
+    {
+      "type": "log", "x": 8, "y": 16, "width": 16, "height": 6,
+      "properties": {
+        "title": "Latest failed questions (brew-gateway log)",
+        "region": "REGION", "view": "table",
+        "query": "SOURCE '/kape/gateway' | fields @timestamp, httpStatus, durationMs, error, question | filter event = 'chat_request' and level = 'error' | sort @timestamp desc | limit 20"
+      }
+    }
+  ]
+}
