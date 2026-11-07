@@ -36,8 +36,8 @@
 <h2>Before and after</h2>
 <table>
 <tr><th>Measure</th><th>How measured</th><th>Before</th><th>After</th></tr>
-<tr><td>Correct answers to the 10 café questions</td><td><code>run-eval.mjs</code>, same 10 questions, same model</td><td class="todo">run the same script against the model with no café documents (stock behaviour); see below</td><td><strong>10/10</strong> (2026-11-06 local; 2026-11-07 AWS)</td></tr>
-<tr><td>Answer time</td><td>Average of the same 10 questions, same script</td><td class="todo">from the same "before" run</td><td><strong>1.5 s</strong> average (2026-11-06)</td></tr>
+<tr><td>Correct answers to the 10 café questions</td><td><code>run-eval.mjs</code>, same 10 questions, same model</td><td><strong>1/10</strong> (2026-11-07 15:04 UTC)</td><td><strong>10/10</strong> (2026-11-06 local; 2026-11-07 AWS)</td></tr>
+<tr><td>Answer time</td><td>Average of the same 10 questions, same script</td><td><strong>1.7 s</strong> average (2026-11-07)</td><td><strong>1.5 s</strong> average (2026-11-06)</td></tr>
 <tr><td>Time to restore the database</td><td>Restore test, same backup</td><td>Impossible: no backups (2026-11-06)</td><td><strong>13 s</strong>, all counts verified (2026-11-07 14:23 UTC)</td></tr>
 <tr><td>Time to notice the site is down</td><td>Alarm design, tested by forcing alarm state</td><td>Not noticed until a customer complains: no monitoring</td><td>About <strong>3 minutes</strong> (site checked every minute, 3 misses), email confirmed working (2026-11-07 04:21 UTC)</td></tr>
 <tr><td>Security problems from the baseline</td><td>The baseline checklist</td><td><strong>8</strong> open (2026-11-06)</td><td><strong>0</strong> open (2026-11-07)</td></tr>
@@ -46,10 +46,12 @@
 <tr><td>Cost per day</td><td>Cost Explorer, daily, tag <code>Project=SAM10</code></td><td>$0 (my laptop, not reachable by customers)</td><td class="todo">average of the same two days, from <code>E-16-cost-baseline-day0.png</code> and a later Cost Explorer screenshot</td></tr>
 </table>
 
-<p class="todo">The "before" quality run: start the gateway locally with an empty content folder, so the model gets no café documents, exactly as stock LibreChat would. For example: <code>mkdir empty</code>, set <code>CONTENT_DIR</code> to it in the gateway's environment, restart it, run <code>node eval/run-eval.mjs --json=docs/evidence/E-04-eval-before-no-content.json</code>, then restore the setting. Send me the JSON and I will add the numbers and a before/after bar chart here.</p>
+<p><strong>How the "before" quality number was measured.</strong> Stock LibreChat simply passes the question to the model. So I sent the same 10 questions, with the same script, straight to the same model (<code>gemini-3.5-flash-lite</code>) with no café documents and no instructions (<a href="evidence/E-04-eval-before-no-cafe-data.json">raw results</a>). It asked which café I meant, quoted US prices for a latte ("$5.00 to $6.50"), and said it is "open 24 hours a day… including Christmas Day". Only the pizza question passed.</p>
+<p>One honest caveat: the bare model's allergy answer ("I cannot guarantee that it is safe for you") was actually a safe refusal, but my checker marked it wrong because it contains the forbidden phrase "safe for you". So the true "before" score is closer to 2/10, and the checker needs a better rule for negated phrases. The comparison is still clear.</p>
 
-<h2>A graph</h2>
-<p class="todo">Screenshot the dashboard's "Answer time" and "Questions answered vs failed" widgets for the same two days as above (CloudWatch → Dashboards → <code>kape-lumen</code> → Custom range) as <code>E-16-results-graph.png</code> and embed it here, plus the before/after bar chart from the quality runs.</p>
+<h2>Graphs</h2>
+<figure class="diagram"><img src="assets/results-quality.svg" alt="Bar chart: before 1 of 10 correct, after 10 of 10 correct"><figcaption>Correct answers to the 10 café questions: the same model without café data (before, 2026-11-07) and Kapé Lumen (after, 2026-11-06).</figcaption></figure>
+<p class="todo">Screenshot the dashboard's "Answer time" and "Questions answered vs failed" widgets for the same two days as availability (CloudWatch → Dashboards → <code>kape-lumen</code> → Custom range) as <code>E-16-results-graph.png</code> and embed it here.</p>
 </main>
 <script src="assets/site.js"></script>
 </body>

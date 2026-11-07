@@ -41,9 +41,13 @@
 </div>
 
 <h3>Every request is logged</h3>
-<p>brew-gateway writes one JSON line per question: the question, how long it took, whether it succeeded, the HTTP status, whether the answer was empty, and which gateway, content and model version answered. This line comes from a local test run (E-09):</p>
-<pre>{"ts":"2026-11-06T13:09:18.509Z","service":"brew-gateway","event":"chat_request","question":"What time does the Session Road branch open on Saturday?","durationMs":2185,"httpStatus":200,"success":true,"emptyAnswer":false,"gatewayVersion":"0.1.0","contentVersion":"f86d7ec89709","model":"gemini-3.5-flash-lite"}</pre>
-<p class="todo">Replace this with a line from AWS: CloudWatch → Log groups → <code>/kape/gateway</code> → search <code>chat_request</code>, copy one line (check it has no personal data).</p>
+<p>brew-gateway writes one JSON line per question: the question, how long it took, whether it succeeded, the HTTP status, whether the answer was empty, and which gateway, content and model version answered. This line is from AWS, CloudWatch log group <code>/kape/gateway</code>, 2026-11-07 (E-09; the <code>_aws</code> block that follows it, used for metrics, is left out):</p>
+<pre>{"ts":"2026-11-07T05:45:06.400Z","service":"brew-gateway","event":"chat_request","level":"info",
+ "requestId":"0631f894-54b1-4e0f-a1cc-645f9be4c7c2",
+ "question":"What time does the Session Road branch open on Saturday?",
+ "durationMs":1601,"httpStatus":200,"success":true,"emptyAnswer":false,"stream":false,"answerChars":55,
+ "gatewayVersion":"0.1.0","contentVersion":"f86d7ec89709","model":"gemini-3.5-flash-lite"}</pre>
+<p><code>durationMs</code> is how long it took, <code>success</code> and <code>httpStatus</code> whether it worked, and <code>gatewayVersion</code>, <code>contentVersion</code> (a fingerprint of the café documents) and <code>model</code> say exactly which version answered. Metric filters count these lines into the dashboard's request, error and latency graphs.</p>
 <figure><img src="evidence/E-09-log-groups-retention.png" alt="CloudWatch log groups with 14-day retention"><figcaption>E-09 The five <code>/kape/*</code> log groups, each with 14-day retention (not "Never expire").</figcaption></figure>
 
 <h2 id="backup">Backup and restore</h2>
@@ -87,7 +91,7 @@
 <tr><td>Broad server permissions</td><td>The server's role can do only what it needs: read its own parameters and bucket, write backups, logs and metrics, and send to the alert topic</td><td>If the server were compromised, the attacker gets the smallest possible set of permissions.</td><td>E-12</td></tr>
 <tr><td>SSH open to the internet</td><td>No port 22; admin shell through Session Manager</td><td>Removes the most-attacked door on any internet server, and there are no SSH keys to lose.</td><td>E-12</td></tr>
 <tr><td>No audit trail</td><td>CloudTrail recording in the region</td><td>Every AWS change is recorded with who made it and when.</td><td>E-12</td></tr>
-<tr><td>Unencrypted disk</td><td>EBS encryption</td><td>A copied disk or snapshot is unreadable without AWS's key.</td><td class="todo">screenshot EC2 → Volumes → Encryption: Encrypted, as <code>E-12-ebs-encrypted.png</code></td></tr>
+<tr><td>Unencrypted disk</td><td>EBS encryption</td><td>A copied disk or snapshot is unreadable without AWS's key.</td><td>E-12</td></tr>
 <tr><td>Deploy credentials</td><td>GitHub Actions signs in with short-lived OIDC tokens; the role works only for <code>main</code> of this repository and can only deploy to this one server</td><td>There are no long-lived AWS keys stored in GitHub to steal.</td><td>E-14</td></tr>
 <tr><td>Personal data to a third party</td><td>Only invented café documents and the question go to Gemini; the terms pop-up tells users not to type personal data</td><td>Nothing personal leaves the account through the model.</td><td>E-01</td></tr>
 <tr><td>Surprise bills</td><td>$10 monthly budget alert, set before anything else</td><td>A runaway job or forgotten resource is noticed in days, not at the end of the month.</td><td>E-16</td></tr>
@@ -100,6 +104,7 @@
 <figure><img src="evidence/E-12-cli-user-and-role.png" alt="CLI identity"><figcaption>E-12 The command line works through the role (<code>aws sts get-caller-identity</code>).</figcaption></figure>
 <figure><img src="evidence/E-12-ec2-role-least-privilege.png" alt="EC2 role permissions"><figcaption>E-12 The server's role: only its own parameters, bucket, logs and metrics.</figcaption></figure>
 <figure><img src="evidence/E-12-security-group-no-ssh.png" alt="Security group"><figcaption>E-12 The security group: only 80 and 443; no SSH.</figcaption></figure>
+<figure><img src="evidence/E-12-ebs-encrypted.png" alt="EBS volume encrypted"><figcaption>E-12 The server's 30 GB gp3 disk: Encryption <strong>Encrypted</strong> with the AWS-managed key <code>aws/ebs</code>.</figcaption></figure>
 <figure><img src="evidence/E-12-cloudtrail.png" alt="CloudTrail"><figcaption>E-12 CloudTrail recording in ap-southeast-1.</figcaption></figure>
 <figure><img src="evidence/E-13-parameter-store.png" alt="Parameter Store"><figcaption>E-13 Secrets in Parameter Store as SecureString (values hidden).</figcaption></figure>
 <figure><img src="evidence/E-16-budget-alert.png" alt="Budget alert"><figcaption>E-16 The $10 monthly budget alert.</figcaption></figure>

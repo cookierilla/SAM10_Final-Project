@@ -30,7 +30,7 @@ services:
       options:
         awslogs-region: ${AWS_REGION}
         awslogs-group: /kape/caddy
-        awslogs-stream: "{{.Name}}"
+        tag: "{{.Name}}"   # stream name = container name (awslogs-stream does not expand templates)
         mode: non-blocking
 
   api:
@@ -60,7 +60,7 @@ services:
       options:
         awslogs-region: ${AWS_REGION}
         awslogs-group: /kape/librechat
-        awslogs-stream: "{{.Name}}"
+        tag: "{{.Name}}"   # stream name = container name (awslogs-stream does not expand templates)
         mode: non-blocking
 
   mongodb:
@@ -88,7 +88,7 @@ services:
       options:
         awslogs-region: ${AWS_REGION}
         awslogs-group: /kape/mongo
-        awslogs-stream: "{{.Name}}"
+        tag: "{{.Name}}"   # stream name = container name (awslogs-stream does not expand templates)
         mode: non-blocking
 
   brew-gateway:
@@ -110,5 +110,5 @@ services:
       options:
         awslogs-region: ${AWS_REGION}
         awslogs-group: /kape/gateway
-        awslogs-stream: "{{.Name}}"
+        tag: "{{.Name}}"   # stream name = container name (awslogs-stream does not expand templates)
         mode: non-blocking

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13">
+  <title>Correct answers to the 10 café test questions: before 1 of 10, after 10 of 10</title>
+  <rect width="640" height="300" fill="#ffffff"/>
+  <text x="20" y="28" font-weight="700" font-size="15" fill="#2b1d14">Correct answers to the 10 café test questions</text>
+  <text x="20" y="47" fill="#6b5141" font-size="12">Same 10 questions, same scoring script (eval/run-eval.mjs), same model (gemini-3.5-flash-lite)</text>
+  <!-- axis: x from 150 to 610 = 10 answers, 46 px each -->
+  <g stroke="#e3d3bf">
+    <line x1="150" y1="70" x2="150" y2="240"/><line x1="242" y1="70" x2="242" y2="240"/><line x1="334" y1="70" x2="334" y2="240"/>
+    <line x1="426" y1="70" x2="426" y2="240"/><line x1="518" y1="70" x2="518" y2="240"/><line x1="610" y1="70" x2="610" y2="240"/>
+  </g>
+  <g fill="#6b5141" font-size="11" text-anchor="middle">
+    <text x="150" y="256">0</text><text x="242" y="256">2</text><text x="334" y="256">4</text><text x="426" y="256">6</text><text x="518" y="256">8</text><text x="610" y="256">10</text>
+  </g>
+  <text x="150" y="278" fill="#6b5141" font-size="11">correct answers out of 10</text>
+
+  <text x="140" y="108" text-anchor="end" fill="#2b1d14" font-weight="600">Before</text>
+  <text x="140" y="124" text-anchor="end" fill="#6b5141" font-size="11">model, no café data</text>
+  <text x="140" y="138" text-anchor="end" fill="#6b5141" font-size="11">2026-11-07</text>
+  <rect x="150" y="92" width="46" height="44" fill="#b3412e" rx="3"/>
+  <text x="204" y="119" fill="#2b1d14" font-weight="700">1 / 10</text>
+
+  <text x="140" y="186" text-anchor="end" fill="#2b1d14" font-weight="600">After</text>
+  <text x="140" y="202" text-anchor="end" fill="#6b5141" font-size="11">Kapé Lumen</text>
+  <text x="140" y="216" text-anchor="end" fill="#6b5141" font-size="11">2026-11-06</text>
+  <rect x="150" y="170" width="460" height="44" fill="#2f7d4a" rx="3"/>
+  <text x="596" y="197" fill="#ffffff" font-weight="700" text-anchor="end">10 / 10</text>
+</svg>

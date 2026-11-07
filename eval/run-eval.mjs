@@ -17,8 +17,12 @@ const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith('--')) ?? new URL('./test-questions.json', import.meta.url);
 const delayMs = Number(args.find((a) => a.startsWith('--delay='))?.split('=')[1] ?? 7000);
 const jsonOut = args.find((a) => a.startsWith('--json='))?.split('=')[1];
-const url = (process.env.GATEWAY_URL ?? 'http://127.0.0.1:8080') + '/v1/chat/completions';
+const base = process.env.GATEWAY_URL ?? 'http://127.0.0.1:8080';
+const url = base + (process.env.EVAL_MODEL ? '/chat/completions' : '/v1/chat/completions');
 const token = process.env.GATEWAY_TOKEN ?? '';
+// "Before" baseline: point GATEWAY_URL at the model's own API and set EVAL_MODEL, so the same
+// questions go to the same model with no café documents or instructions (what stock LibreChat does).
+const model = process.env.EVAL_MODEL;
 
 const { questions } = JSON.parse(readFileSync(file, 'utf8'));
 const results = [];
@@ -32,7 +36,7 @@ for (const [i, q] of questions.entries()) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ messages: [{ role: 'user', content: q.question }] }),
+      body: JSON.stringify({ ...(model && { model }), messages: [{ role: 'user', content: q.question }] }),
       signal: AbortSignal.timeout(90000),
     });
     status = res.status;

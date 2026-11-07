@@ -1,4 +1,4 @@
-# Incident 2026-11-07: MongoDB log (CloudWatch /kape/mongo, stream chat-mongodb), 04:17:16-04:17:19 UTC
+# Incident 2026-11-07: MongoDB log from CloudWatch /kape/mongo, 04:17:16-04:17:19 UTC. (The stream was named literally "{{.Name}}" at the time; fixed later.)
 # Excerpt: error and fatal lines before the crash, then the restart. Checked: no secrets.
 {"t":{"$date":"2026-11-07T04:17:16.000+00:00"},"s":"E",  "c":"ASSERT",   "id":23077,   "ctx":"ftdc","msg":"Assertion","attr":{"error":"Location13538: couldn't open [/proc/1/stat] Too many open files","file":"src/mongo/util/processinfo_linux.cpp","line":117}}
 {"t":{"$date":"2026-11-07T04:17:16.144+00:00"},"s":"E",  "c":"WT",       "id":22435,   "ctx":"conn76","msg":"WiredTiger error message","attr":{"error":24,"message":{"ts_sec":1794025036,"ts_usec":144717,"thread":"1:0x7e495a9166c0","session_name":"WT_SESSION.create","category":"WT_VERB_DEFAULT","log_id":1000000,"category_id":12,"verbose_level":"ERROR","verbose_level_id":-3,"msg":"__posix_directory_sync:256:/data/db/: directory-sync: open","error_str":"Too many open files","error_code":24}}}

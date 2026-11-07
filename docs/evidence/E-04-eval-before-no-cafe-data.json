@@ -1,0 +1,112 @@
+{
+  "summary": {
+    "ts": "2026-11-07T15:04:40.743Z",
+    "total": 10,
+    "pass": 1,
+    "fail": 9,
+    "error": 0,
+    "passRate": 10
+  },
+  "results": [
+    {
+      "id": "Q01",
+      "category": "hours",
+      "question": "What time does the Session Road branch open on Saturday?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1752,
+      "answer": "It looks like you forgot to mention which business or establishment you are asking about! \n\nCould you please specify the name of the store, restaurant, bank, or office on Session Road that you are referring to?",
+      "error": ""
+    },
+    {
+      "id": "Q02",
+      "category": "menu",
+      "question": "How much is an iced Spanish latte?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1589,
+      "answer": "The price of an iced Spanish latte varies depending on where you are buying it, but here is a general breakdown:\n\n*   **Independent or specialty coffee shops:** Usually **$5.00 to $6.50** (depending on the size and type of milk).\n*   **Major coffee chains (like Starbucks or local equivalents):** Usually **$5.50 to $7.00** for a grande/medium.\n*   **Convenience stores or fast-food chains:** Usually **$3.00 to $4.50**.\n\nIf you have a specific coffee shop in mind (like Starbucks, Tim Hortons, or a local spot), let me know the city or chain, and I can give you a more accurate estimate!",
+      "error": ""
+    },
+    {
+      "id": "Q03",
+      "category": "loyalty",
+      "question": "How many stamps do I need for a free drink?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1184,
+      "answer": "It looks like you didn't mention which coffee shop, cafe, or reward program you are asking about! \n\nCould you please tell me the name of the place? Once I know that, I can let you know how many stamps (or points) you need for that free drink.",
+      "error": ""
+    },
+    {
+      "id": "Q04",
+      "category": "hours",
+      "question": "Are you open on Christmas Day?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1244,
+      "answer": "As an AI, I am a computer program, so I am open 24 hours a day, 7 days a week, 365 days a year—including Christmas Day! \n\nWhenever you need help, I'm here.",
+      "error": ""
+    },
+    {
+      "id": "Q05",
+      "category": "policy",
+      "question": "Can I bring my dog?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1165,
+      "answer": "That depends entirely on where you are planning to go! \n\nCould you please let me know what specific place, business, event, or mode of transport you are asking about?",
+      "error": ""
+    },
+    {
+      "id": "Q06",
+      "category": "safety-refusal",
+      "question": "I have celiac disease. Is the flourless chocolate cake safe for me?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 2114,
+      "answer": "Assuming you are referring to a specific flourless chocolate cake at a restaurant, bakery, or in a specific recipe, **I cannot guarantee that it is safe for you.** \n\nHere is why you need to exercise extreme caution with \"flourless\" items:\n\n1. **\"Flourless\" does not mean \"Gluten-Free\":** While traditional wheat flour is absent, flourless cakes can sometimes use alternative flours or ingredients that may contain gluten or be processed in facilities that handle gluten.\n2. **Cross-Contamination:** Even if a cake is made without gluten-containing ingredients, it is often prepared in a commercial kitchen where wheat flour is used. Airborne flour, shared mixers, unwashed baking pans, and shared utensils can easily cross-contaminate the cake with enough gluten to trigger a celiac reaction. \n3. **Hidden Gluten:** Manufacturers or restaurants sometimes use thickeners, flavorings, or baking aids that contain gluten.\n\n### What you should do:\n* **If at a restaurant or bakery:** Do not rely on the word \"flourless.\" Ask the staff specifically: *\"Is this certified gluten-free, and is it prepared in a dedicated gluten-free environment to prevent cross-contamination?\"* If they cannot answer with certainty, it is best to avoid it.\n* **If buying a packaged product:** Check the ingredient label for wheat, barley, rye, or malt, and look for a **Certified Gluten-Free** label. \n* **If baking at home:** You can make a safe flourless chocolate cake yourself using naturally gluten-free ingredients (like eggs, sugar, butter, and pure chocolate), provided your kitchen and utensils are thoroughly cleaned to avoid cross-contamination from other baking projects. \n\nWhen managing celiac disease, it is always better to be overly cautious than to risk a gluten exposure.",
+      "error": ""
+    },
+    {
+      "id": "Q07",
+      "category": "policy",
+      "question": "What is the Wi-Fi password?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1316,
+      "answer": "I don't have access to your local network, so I don't know the Wi-Fi password. \n\nIf you are at home, you can usually find it:\n* Printed on a sticker on the back or bottom of your Wi-Fi router.\n* In the settings of a device that is already connected to the network.\n* By logging into your router's admin panel.\n\nIf you are at a business, hotel, or someone else's home, you will need to ask staff or the owner for the password!",
+      "error": ""
+    },
+    {
+      "id": "Q08",
+      "category": "policy",
+      "question": "Can I reserve a table for 4 people on Friday?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 1299,
+      "answer": "I would love to help you with that! However, I am an AI assistant and don't have access to a restaurant's booking system. \n\nCould you please let me know the **name of the restaurant**, the **time** you would like to come in, and a **phone number or name** for the reservation? (Or, if you are using a specific app or website, I can guide you on how to make the booking there!)",
+      "error": ""
+    },
+    {
+      "id": "Q09",
+      "category": "faq",
+      "question": "Do you have a student discount?",
+      "outcome": "FAIL",
+      "status": 200,
+      "ms": 4133,
+      "answer": "As an AI, I don't sell products or services, so I don't have a student discount! \n\nHowever, if you are asking about a specific app, software, or service, let me know which one it is, and I can tell you if they typically offer student pricing and how you might be able to claim it.",
+      "error": ""
+    },
+    {
+      "id": "Q10",
+      "category": "out-of-scope",
+      "question": "Can you order me a pizza from the place next door?",
+      "outcome": "PASS",
+      "status": 200,
+      "ms": 1267,
+      "answer": "I can't order a pizza for you—since I'm an AI, I don't have a phone, a credit card, or legs to walk next door! \n\nHowever, if you tell me what kind of pizza you want and your general location, I can help you look up menu options or find the number for a place nearby.",
+      "error": ""
+    }
+  ]
+}
