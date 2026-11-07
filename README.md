@@ -34,7 +34,19 @@ See [docs/DEPLOY-AWS.md](docs/DEPLOY-AWS.md): account safety, CLI setup, S3 + Pa
 Edit `site/*.html` and push: GitHub Actions publishes it (one-time: repo **Settings → Pages → Source: GitHub Actions**). Preview locally with `python -m http.server 8765 --directory site` after copying `docs/evidence/*.png` into `site/evidence/`.
 
 ## How to deploy the automations
-_TODO (automations phase)._
+All scheduled jobs live in this repo and are installed by `infra/deploy.sh` (cron file `infra/cron/kape-lumen`). Every deploy reinstalls them, so a push to `main` updates them too. Times are PHT.
+
+| Job | When | Script | Proof it ran |
+|---|---|---|---|
+| Nightly backup to S3 | 02:00 daily | `infra/ops/backup.sh` | metric `BackupSuccess`, alarm `kape-backup-missing`, S3 `backups/<time>/` |
+| Nightly quality check (emails the pass rate) | 02:30 daily | `infra/ops/eval.sh` | email, metric `EvalPassRate` |
+| Restore test | 03:30 Sundays | `infra/ops/restore.sh --test latest` | metric `RestoreTestSuccess` |
+| Site check | every minute | `infra/ops/probe.sh` | metric `SiteUp`, alarm `kape-site-down` |
+| Deploy on push to `main` | on push | `.github/workflows/deploy.yml` | GitHub Actions run history |
+
+Setup: [docs/DEPLOY-AWS.md](docs/DEPLOY-AWS.md) Parts G and H. Alarms and dashboard: `infra/monitoring/setup-monitoring.sh`. Every job logs to `/var/log/kape-automation.log`, which is shipped to CloudWatch `/kape/host`.
+
+Runbook: [docs/runbooks/restore-from-backup.md](docs/runbooks/restore-from-backup.md). Incident: [docs/incidents/2026-11-07-restore-killed-137.md](docs/incidents/2026-11-07-restore-killed-137.md).
 
 ## Secrets
 No keys, passwords or tokens are stored in this repository. Locally they live in a gitignored `.env`. On AWS they live in SSM Parameter Store (SecureString) and are read at runtime. Run `gitleaks detect` before every push.

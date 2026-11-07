@@ -303,6 +303,37 @@ aws cloudwatch set-alarm-state --alarm-name kape-answers-failing --state-value A
 
 ---
 
+## Part H — Automations and auto-deploy
+
+### H1. Nightly quality check (automation 2)
+`infra/ops/eval.sh` runs at **02:30 PHT** nightly from the same cron file. It asks the 10 test questions in `eval/test-questions.json` through the real gateway and model, scores them, emails **"Kape Lumen nightly check: N% correct"** to `kape-alerts`, and publishes `EvalPassRate`. Run it by hand once to see the email:
+```bash
+sudo /opt/kape/app/infra/ops/eval.sh
+```
+
+### H2. Deploy on every push to main (one-time setup, about 5 minutes)
+From your PC (Git Bash, `AWS_PROFILE=kape`):
+```bash
+./infra/iam/setup-github-deploy.sh
+```
+It creates an OIDC trust between GitHub and AWS, and a role `KapeGithubDeploy` that **only** pushes to `main` of this repo can use. That role can do two things: run `deploy.sh` on our one instance, and write `content/` in the bucket. No AWS keys are stored in GitHub.
+
+Then add the **4 repository variables** it prints: GitHub → repo → **Settings → Secrets and variables → Actions → Variables** tab → *New repository variable*.
+
+Test it: GitHub → **Actions → Deploy to AWS → Run workflow**. ✅ All steps green, ending with `attempt 1: HTTP 200`.
+
+From now on, a push that changes `infra/`, `gateway/`, `librechat/`, `content/` or `eval/` runs the gateway tests, syncs content, redeploys and checks the site. A failing test stops the deploy.
+
+### H3. Proof the automations ran unattended (the brief needs 2+ runs each)
+After two nights, from your PC:
+```bash
+aws logs filter-log-events --log-group-name /kape/host --log-stream-name-prefix i- --filter-pattern '"backup 2" OK' --query 'events[].message' --output text
+aws logs filter-log-events --log-group-name /kape/host --log-stream-name-prefix i- --filter-pattern '"eval done"' --query 'events[].message' --output text
+```
+Each line is one unattended run with its timestamp. Those timestamps go on the website.
+
+---
+
 ## Everyday operations
 | Task | Command |
 |---|---|

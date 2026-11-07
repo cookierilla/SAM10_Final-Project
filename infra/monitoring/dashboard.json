@@ -102,11 +102,12 @@
     {
       "type": "metric", "x": 0, "y": 16, "width": 8, "height": 6,
       "properties": {
-        "title": "Backups (1 = OK) and backup size",
+        "title": "Nightly jobs: backup (1 = OK), restore test, quality check",
         "region": "REGION", "view": "singleValue", "period": 86400, "stat": "Maximum",
         "metrics": [
           ["KapeLumen", "BackupSuccess", {"label": "last nightly backup"}],
           ["KapeLumen", "RestoreTestSuccess", {"label": "last restore test", "period": 604800}],
+          ["KapeLumen", "EvalPassRate", {"label": "test questions correct (%)"}],
           ["KapeLumen", "BackupSizeBytes", {"label": "backup size (bytes)"}]
         ]
       }

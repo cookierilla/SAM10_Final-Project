@@ -12,3 +12,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 
 # 03:30 PHT Sundays: restore the latest backup into a test database and check it (metric RestoreTestSuccess)
 30 19 * * 6 root /opt/kape/app/infra/ops/restore.sh --test latest >/dev/null 2>&1
+
+# 02:30 PHT nightly: ask the test questions, email the pass rate (metric EvalPassRate)
+30 18 * * * root /opt/kape/app/infra/ops/eval.sh >/dev/null 2>&1
