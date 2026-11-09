@@ -31,13 +31,13 @@ Screenshots are published unblurred by choice: they show the AWS account number 
 | E-11 | `E-11-restore-test.png` | Restore test killed with exit 137, then passing (14 s). | Backup, Incident |
 | E-12 | `E-12-root-mfa.png`, `E-12-iam-users.png`, `E-12-iam-user-permissions.png`, `E-12-admin-role-mfa-trust.png`, `E-12-cli-user-and-role.png`, `E-12-ec2-role-least-privilege.png`, `E-12-security-group-no-ssh.png`, `E-12-cloudtrail.png`, `E-12-ebs-encrypted.png` | MFA, IAM users and roles, least privilege, no SSH, CloudTrail, encrypted disk. | Security |
 | E-13 | `E-13-parameter-store.png` | Secrets in Parameter Store (names only). | Security |
-| E-14 | `E-14-eval-email.png`, `E-14-github-deploy-run.png` | Nightly check email (10/10); GitHub Actions deploy run #7 green. | Automation |
+| E-14 | `E-14-eval-email.png`, `E-14-github-deploy-run.png`, `E-14-unattended-runs.png` | Nightly check email (10/10); GitHub Actions deploy run #7 green; Logs Insights showing the first unattended backup, quality check and Sunday restore test (2026-11-07 UTC). | Automation, Incident |
 | E-15 | `E-15-oom-evidence.png`, `E-15-mongo-too-many-open-files.txt`, `E-15-ulimit-fixed.png`, `E-15-restore-after-fix.png` | Incident: no OOM kill, MongoDB's "Too many open files" crash, limit raised to 64000, restore passing after the fix. | Incident |
 | E-16 | `E-16-billing-alerts-enabled.png`, `E-16-budget-alert.png` | Billing alerts on; $10 budget alert. | Security |
 | E-18 | `site/assets/infrastructure.svg` | Infrastructure diagram. | Infrastructure |
 
 ## Still to capture
-`E-14-unattended-runs.png` (Logs Insights, after the nightly jobs have run twice) · `E-16-cost-baseline-day0.png` and a later cost screenshot · `E-16-results-graph.png` · optional `E-06-dashboard-1w.png`, `E-17-well-architected-report.pdf`.
+Second night's rows for the Unattended runs table (2026-11-08 18:00/18:30 UTC) · `E-16-cost-baseline-day0.png` and a later cost screenshot · `E-16-results-graph.png` · optional `E-06-dashboard-1w.png`, `E-17-well-architected-report.pdf`.
 
 ## How the screenshots were taken
 E-01 and E-03 screenshots were captured with a headless Microsoft Edge browser driven by a Playwright script (Claude-assisted), logged in as an invented demo account. The answers shown are real, unedited model output. E-05 screenshots were taken by hand.
