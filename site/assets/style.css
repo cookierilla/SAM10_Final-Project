@@ -78,3 +78,8 @@ footer.site { color: var(--muted); font-size: 0.85rem; padding-bottom: 32px; bor
 .callout { background: var(--surface); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 6px; margin: 1em 0; }
 .verdict-adequate { color: var(--accent); font-weight: 600; }
 figure.diagram img { background: #fff; padding: 8px; }
+
+/* Embedded presentation video: 16:9, full content width */
+.video { position: relative; aspect-ratio: 16 / 9; width: 100%; margin: 1rem 0 .4rem; border-radius: 10px; overflow: hidden; background: #000; }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.muted { color: var(--muted); font-size: .92em; }
