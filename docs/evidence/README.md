@@ -23,7 +23,7 @@ Screenshots are published unblurred by choice: they show the AWS account number 
 |---|---|---|---|
 | E-02 | `E-02-ec2-instance.png`, `E-02-live-url-chat.png` | The t3.small instance; Lumen answering at the public HTTPS address. | System |
 | E-04 | `E-04-eval-before-no-cafe-data.json` | "Before": the same 10 questions sent to the same model with no café data: 1/10 (2026-11-07 15:04 UTC). | Results |
-| E-06 | `E-06-dashboard.png` | The `kape-lumen` CloudWatch dashboard. | Monitoring |
+| E-06 | `E-06-dashboard.png`, `E-06-dashboard-1w.png` | The `kape-lumen` CloudWatch dashboard; the same over one week (2026-11-06 to 11-13). | Monitoring |
 | E-07 | `E-07-alarms-list.png` | The ten `kape-` alarms. | Monitoring |
 | E-08 | `E-08-sns-subscription-confirmed.png`, `E-08-alarm-email.png` | Confirmed SNS email subscription; alarm email received 2026-11-07 04:21:05 UTC. | Monitoring |
 | E-09 | `E-09-log-groups-retention.png` | `/kape/*` log groups with 14-day retention. | Monitoring |
@@ -33,11 +33,8 @@ Screenshots are published unblurred by choice: they show the AWS account number 
 | E-13 | `E-13-parameter-store.png` | Secrets in Parameter Store (names only). | Security |
 | E-14 | `E-14-eval-email.png`, `E-14-github-deploy-run.png`, `E-14-unattended-runs.png` | Nightly check email (10/10); GitHub Actions deploy run #7 green; Logs Insights showing the first unattended backup, quality check and Sunday restore test (2026-11-07 UTC). | Automation, Incident |
 | E-15 | `E-15-oom-evidence.png`, `E-15-mongo-too-many-open-files.txt`, `E-15-ulimit-fixed.png`, `E-15-restore-after-fix.png` | Incident: no OOM kill, MongoDB's "Too many open files" crash, limit raised to 64000, restore passing after the fix. | Incident |
-| E-16 | `E-16-billing-alerts-enabled.png`, `E-16-budget-alert.png` | Billing alerts on; $10 budget alert. | Security |
+| E-16 | `E-16-billing-alerts-enabled.png`, `E-16-budget-alert.png`, `E-16-cost-baseline-day0.png`, `E-16-cost-2026-11-12.png`, `E-16-results-graph.png` | Billing alerts on; $10 budget alert; cost $0.00 for 2026-11-01 to 11-08; usage vs credits to 11-12 ($0.84/day usage, $0.00 billed); dashboard for 2026-11-08 to 11-13 (100% up, 0 failed, slow nights). | Security, Results |
 | E-18 | `site/assets/infrastructure.svg` | Infrastructure diagram. | Infrastructure |
 
 ## Still to capture
-Second night's rows for the Unattended runs table (2026-11-08 18:00/18:30 UTC) · `E-16-cost-baseline-day0.png` and a later cost screenshot · `E-16-results-graph.png` · optional `E-06-dashboard-1w.png`, `E-17-well-architected-report.pdf`.
-
-## How the screenshots were taken
-E-01 and E-03 screenshots were captured with a headless Microsoft Edge browser driven by a Playwright script (Claude-assisted), logged in as an invented demo account. The answers shown are real, unedited model output. E-05 screenshots were taken by hand.
+Optional `E-17-well-architected-report.pdf`.

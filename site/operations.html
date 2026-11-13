@@ -15,7 +15,7 @@
 <p>Every container sends its logs straight to CloudWatch (one log group each: <code>/kape/caddy</code>, <code>/kape/librechat</code>, <code>/kape/mongo</code>, <code>/kape/gateway</code>, plus <code>/kape/host</code> for the server and the scheduled jobs), kept for 14 days. Metric filters turn the gateway's and Caddy's log lines into numbers, the CloudWatch agent adds memory and disk, and the scheduled jobs publish their own results.</p>
 
 <figure><img src="evidence/E-06-dashboard.png" alt="CloudWatch dashboard kape-lumen"><figcaption>E-06 The <code>kape-lumen</code> CloudWatch dashboard, 2026-11-07: the state of all ten alarms; what customers feel (site up, questions answered vs failed, answer time median and slowest 10%, web requests and server errors); the server (CPU and burst credits, memory, swap and disk, EC2 health checks); and the nightly jobs. Alarm thresholds are drawn as lines on each graph.</figcaption></figure>
-<p class="todo">After a few days of use, retake this as <code>E-06-dashboard-1w.png</code> with the 1-week view, so the graphs show the nightly jobs and real traffic.</p>
+<figure><img src="evidence/E-06-dashboard-1w.png" alt="kape-lumen dashboard, one week"><figcaption>E-06 The same dashboard over a full week, 2026-11-06 to 2026-11-13 UTC: the site check flat at 1 after the first deploy, the nightly questions as dots, and two nights where the slowest answers crossed the 10-second alarm line.</figcaption></figure>
 
 <h3>The ten alarms, and why each threshold</h3>
 <p>All ten email me through the SNS topic <code>kape-alerts</code>, both when they go into alarm and when they recover.</p>

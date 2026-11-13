@@ -30,12 +30,21 @@
 <table class="timeline">
 <tr><th>Job</th><th>Run</th><th>Started (UTC)</th><th>Result</th></tr>
 <tr><td>Nightly backup</td><td>1</td><td>2026-11-07 18:00</td><td>OK: backup <code>20261107T180002Z</code>, 15 805 bytes in 8 s</td></tr>
-<tr><td>Nightly backup</td><td>2</td><td class="todo">2026-11-08 18:00</td><td></td></tr>
-<tr><td>Nightly quality check</td><td>1</td><td>2026-11-07 18:30</td><td>SCORE 10/10 correct (100%), 0 wrong, 0 errors (finished 18:31:20)</td></tr>
-<tr><td>Nightly quality check</td><td>2</td><td class="todo">2026-11-08 18:30</td><td></td></tr>
-<tr><td>Restore test</td><td>1</td><td>2026-11-07 19:30 (Sunday 03:30 PHT)</td><td>OK in 14 s: restored backup <code>20261107T180002Z</code>, counts match the backup</td></tr>
+<tr><td>Nightly quality check</td><td>1</td><td>2026-11-07 18:30</td><td>10/10 correct, 0 errors</td></tr>
+<tr><td>Restore test (Sunday)</td><td>1</td><td>2026-11-07 19:30 (Sunday 03:30 PHT)</td><td>OK in 14 s: restored backup <code>20261107T180002Z</code>, counts match the backup</td></tr>
+<tr><td>Nightly backup</td><td>2</td><td>2026-11-08 18:00</td><td>OK: 15 791 bytes in 10 s</td></tr>
+<tr><td>Nightly quality check</td><td>2</td><td>2026-11-08 18:30</td><td><strong>9/10</strong>: Q10 (the pizza question) not passed, 0 errors; emailed "90% correct"</td></tr>
+<tr><td>Nightly backup</td><td>3</td><td>2026-11-09 18:00</td><td>OK: 15 393 bytes in 9 s</td></tr>
+<tr><td>Nightly quality check</td><td>3</td><td>2026-11-09 18:30</td><td>10/10; answers slow, <code>kape-answers-slow</code> alarm emailed</td></tr>
+<tr><td>Nightly backup</td><td>4</td><td>2026-11-10 18:00</td><td>OK: 15 211 bytes in 11 s</td></tr>
+<tr><td>Nightly quality check</td><td>4</td><td>2026-11-10 18:30</td><td>10/10 correct, 0 errors</td></tr>
+<tr><td>Nightly backup</td><td>5</td><td>2026-11-11 18:00</td><td>OK: 15 308 bytes in 9 s</td></tr>
+<tr><td>Nightly quality check</td><td>5</td><td>2026-11-11 18:30</td><td>10/10 correct, 0 errors</td></tr>
+<tr><td>Nightly backup</td><td>6</td><td>2026-11-12 18:00</td><td>OK: 15 246 bytes in 9 s</td></tr>
+<tr><td>Nightly quality check</td><td>6</td><td>2026-11-12 18:30</td><td>10/10; answers slow, alarm emailed at 18:36, cleared at 18:56</td></tr>
 </table>
-<figure><img src="evidence/E-14-unattended-runs.png" alt="Logs Insights: unattended backup, quality check and restore test"><figcaption>E-14 CloudWatch Logs Insights on <code>/kape/host</code>, 2026-11-07 17:00 to 2026-11-08 23:59 UTC: the first unattended backup (18:00), quality check (18:31) and Sunday restore test (19:30), all run by cron with nobody logged in. The restore test restored the backup made 90 minutes earlier. Query: <code>fields @timestamp, @message | filter @message like /\[(backup|eval|restore)\]/ and @message like /OK|eval done|FAILED/ | sort @timestamp asc</code>.</figcaption></figure>
+<p>Six nights, 12 unattended jobs and one Sunday restore test: every backup and restore succeeded. Two things went wrong and were caught without me looking: one quality check scored 9/10, and on two nights the answers were slow enough to trip the <code>kape-answers-slow</code> alarm (see <a href="results.html">Results</a>). (The restore at 2026-11-09 03:11 UTC in the log was run by hand, live, for the presentation video.)</p>
+<figure><img src="evidence/E-14-unattended-runs.png" alt="Logs Insights: unattended backup, quality check and restore test"><figcaption>E-14 CloudWatch Logs Insights on <code>/kape/host</code>, 2026-11-07 17:00 to 2026-11-08 23:59 UTC: the first unattended backup (18:00), quality check (18:31) and Sunday restore test (19:30), all run by cron with nobody logged in. The later rows of the table come from the same query run on 2026-11-13. The restore test restored the backup made 90 minutes earlier. Query: <code>fields @timestamp, @message | filter @message like /\[(backup|eval|restore)\]/ and @message like /OK|eval done|FAILED/ | sort @timestamp asc</code>.</figcaption></figure>
 
 <figure><img src="evidence/E-14-github-deploy-run.png" alt="GitHub Actions deploy run, all green"><figcaption>E-14 Auto-deploy: run #7 of "Deploy to AWS", 2026-11-07, test and deploy both green. Runs #1–#6 failed while I set it up (missing repository variables, then an IAM trust policy that did not match the identity GitHub actually presents); each failure is kept in the history.</figcaption></figure>
 

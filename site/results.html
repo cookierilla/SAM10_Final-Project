@@ -30,7 +30,7 @@
 <ul>
 <li>2026-11-06 13:10 UTC, local: <strong>10/10 correct</strong>, average answer time 1.5 s (1.4–2.3 s). Raw results: <a href="evidence/E-04-eval-2026-11-06-flash-lite.json">E-04 JSON</a>.</li>
 <li>2026-11-07 05:46 UTC, on AWS: <strong>10/10 correct</strong>, 0 errors (E-14, the first quality-check email).</li>
-<li>Every night since, by the automatic quality check (metric <code>EvalPassRate</code>).</li>
+<li>Every night since, by the automatic quality check (metric <code>EvalPassRate</code>), 2026-11-08 to 2026-11-12: <strong>10, 9, 10, 10, 10</strong> out of 10, so <strong>49/50 (98%)</strong>. The one miss (2026-11-08) was Q10, "Can you order me a pizza from the place next door?": the answer did not contain any of the refusal words the checker looks for. Whether it was a real mistake or another checker false negative, the full answer is kept on the server in <code>eval-20261108T183001Z.json</code>.</li>
 </ul>
 
 <h2>Before and after</h2>
@@ -41,9 +41,10 @@
 <tr><td>Time to restore the database</td><td>Restore test, same backup</td><td>Impossible: no backups (2026-11-06)</td><td><strong>13 s</strong>, all counts verified (2026-11-07 14:23 UTC)</td></tr>
 <tr><td>Time to notice the site is down</td><td>Alarm design, tested by forcing alarm state</td><td>Not noticed until a customer complains: no monitoring</td><td>About <strong>3 minutes</strong> (site checked every minute, 3 misses), email confirmed working (2026-11-07 04:21 UTC)</td></tr>
 <tr><td>Security problems from the baseline</td><td>The baseline checklist</td><td><strong>8</strong> open (2026-11-06)</td><td><strong>0</strong> open (2026-11-07)</td></tr>
-<tr><td>Availability (share of minutes the site answered)</td><td>Average of <code>SiteUp</code>, checked every minute</td><td>Not measurable: no monitoring</td><td class="todo">CloudWatch → <code>SiteUp</code>, Average, period 1 day, for two whole days (for example 2026-11-08 to 2026-11-09)</td></tr>
-<tr><td>Failed answers</td><td><code>GatewayErrors</code> ÷ <code>GatewayRequests</code></td><td>Not measurable: no request logging</td><td class="todo">same two days as availability</td></tr>
-<tr><td>Cost per day</td><td>Cost Explorer, daily, tag <code>Project=SAM10</code></td><td>$0 (my laptop, not reachable by customers)</td><td class="todo">average of the same two days, from <code>E-16-cost-baseline-day0.png</code> and a later Cost Explorer screenshot</td></tr>
+<tr><td>Availability (share of minutes the site answered)</td><td>Average of <code>SiteUp</code>, checked every minute</td><td>Not measurable: no monitoring</td><td><strong>100%</strong>: 7&nbsp;200 of 7&nbsp;200 checks answered, 2026-11-08 to 2026-11-12 UTC (5 full days; daily minimum also 1)</td></tr>
+<tr><td>Failed answers</td><td><code>chat_request</code> lines with <code>success: false</code> ÷ all <code>chat_request</code> lines (<code>/kape/gateway</code>)</td><td>Not measurable: no request logging</td><td><strong>0 of 52</strong> (0%), same 5 days</td></tr>
+<tr><td>Answer time in production</td><td>Average <code>durationMs</code> of the same 52 requests</td><td>1.5 s on my laptop (2026-11-06)</td><td><strong>7.3 s</strong> average; nightly average ranged from 0.9 s (2026-11-08) to 14.3 s (2026-11-09). <strong>Worse</strong>: see below</td></tr>
+<tr><td>Cost per day</td><td>Cost Explorer, daily, region Singapore, grouped by charge type</td><td>$0 (my laptop, not reachable by customers)</td><td><strong>$0.84</strong> average usage per day, same 5 days ($0.78–$0.86); <strong>$0.00 billed</strong>, because AWS credits cover it. About $25 a month once the credits run out</td></tr>
 </table>
 
 <p><strong>How the "before" quality number was measured.</strong> Stock LibreChat simply passes the question to the model. So I sent the same 10 questions, with the same script, straight to the same model (<code>gemini-3.5-flash-lite</code>) with no café documents and no instructions (<a href="evidence/E-04-eval-before-no-cafe-data.json">raw results</a>). It asked which café I meant, quoted US prices for a latte ("$5.00 to $6.50"), and said it is "open 24 hours a day… including Christmas Day". Only the pizza question passed.</p>
@@ -51,7 +52,15 @@
 
 <h2>Graphs</h2>
 <figure class="diagram"><img src="assets/results-quality.svg" alt="Bar chart: before 1 of 10 correct, after 10 of 10 correct"><figcaption>Correct answers to the 10 café questions: the same model without café data (before, 2026-11-07) and Kapé Lumen (after, 2026-11-06).</figcaption></figure>
-<p class="todo">Screenshot the dashboard's "Answer time" and "Questions answered vs failed" widgets for the same two days as availability (CloudWatch → Dashboards → <code>kape-lumen</code> → Custom range) as <code>E-16-results-graph.png</code> and embed it here.</p>
+<figure><img src="evidence/E-16-results-graph.png" alt="CloudWatch dashboard for 2026-11-08 to 2026-11-13"><figcaption>E-16 The <code>kape-lumen</code> dashboard, 2026-11-08 to 2026-11-13 UTC. Site up: a flat line at 1 for five days. Questions answered vs failed: the 10 nightly questions, 0 failed. Answer time: the slowest 10% went over the 10-second alarm line on the nights of 9, 10 and 12 November.</figcaption></figure>
+
+<h2>What got worse: answer time</h2>
+<p>Answers are always correct and never failed, but they became slower once the system ran on AWS. The 52 questions in these five days were almost all the nightly check (10 per night, at 02:30 PHT), and on two nights (9 and 12 November) the slowest 10% took 18 to 23 seconds; one answer took 38 s. All of them still succeeded (HTTP 200). The <code>kape-answers-slow</code> alarm caught it and emailed me twice: on the night of 2026-11-09 and on 2026-11-12 (ALARM at 18:36 UTC, OK again at 18:56 UTC).</p>
+<p>The likely cause is the free tier of the Gemini API, which gives no speed guarantee; the server itself was quiet at those times (CPU and memory flat on the dashboard). I have not proved it yet: the next step is to log the model call's own time separately from the gateway's total, so the two can be told apart. If it is the model, the fix is item 2 of <a href="next-steps.html">Next steps</a>: give up after a few seconds and use a fallback model.</p>
+
+<h2>Cost</h2>
+<p>The bill so far is $0.00, but that is not the same as free. Grouped by charge type, Cost Explorer shows the real usage, <strong>$5.00 from 2026-11-07 to 2026-11-12</strong> ($0.78–$0.86 a day), cancelled out by an equal amount of AWS credits. At this rate the system would cost about <strong>$25 a month</strong> after the credits. The $10 budget alert (E-16) is there to catch anything unusual before then.</p>
+<figure><img src="evidence/E-16-cost-2026-11-12.png" alt="Cost Explorer: daily usage and credits"><figcaption>E-16 Cost Explorer, 2026-11-01 to 2026-11-12, daily, region Singapore, grouped by charge type: red is usage, blue the credits that pay for it. Nothing before 2026-11-07, when the server went up. The earlier day-0 view (<a href="evidence/E-16-cost-baseline-day0.png">E-16-cost-baseline-day0.png</a>) showed only the $0.00 total.</figcaption></figure>
 </main>
 <script src="assets/site.js"></script>
 </body>
